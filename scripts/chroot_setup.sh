@@ -17,7 +17,7 @@ cd $PROJ_DIR
 
 # Set up virtual environment
 python3 -m venv venv
-./venv/bin/pip install Pillow Flask psutil requests paho-mqtt
+./venv/bin/pip install -r $PROJ_DIR/requirements.txt
 
 echo "🛠️ [chroot] Compiling hzeller RGB Matrix Library..."
 git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
