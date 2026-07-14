@@ -37,8 +37,8 @@ if [ -z "$START_SECTOR" ]; then
 fi
 NEXT_SECTOR=$((START_SECTOR + 1))
 
-# Create new partition taking up the rest of the file
-parted -s $IMG_FILE mkpart primary fat32 ${NEXT_SECTOR}s 100%
+# Create new partition taking up the rest of the file. Using 'ntfs' sets the MBR type to 0x07 (exFAT/NTFS)
+parted -s $IMG_FILE mkpart primary ntfs ${NEXT_SECTOR}s 100%
 
 
 echo "🔗 Mounting partitions to loop devices..."
