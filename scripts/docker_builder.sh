@@ -7,14 +7,18 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y wget kpartx qemu-user-static e
 echo "📥 Downloading latest Raspberry Pi OS Lite (ARM64 Bookworm)..."
 IMG_URL="https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
 
-IMG_FILE="ArcadeMatrix_Build_${RANDOM}.img"
+IMG_FILE="/tmp/ArcadeMatrix_Build_${RANDOM}.img"
 
-if [ ! -f "raspios.img.xz" ]; then
-    wget -O raspios.img.xz "$IMG_URL"
+if [ -f "/workspace/raspios.img.xz" ]; then
+    echo "Using cached /workspace/raspios.img.xz"
+    cp /workspace/raspios.img.xz /tmp/raspios.img.xz
+else
+    wget -O /tmp/raspios.img.xz "$IMG_URL"
+    cp /tmp/raspios.img.xz /workspace/raspios.img.xz || true
 fi
 
-echo "🗜️ Extracting OS image..."
-xz -d -c raspios.img.xz > $IMG_FILE
+echo "🗜️ Extracting OS image natively in /tmp..."
+xz -d -c /tmp/raspios.img.xz > $IMG_FILE
 
 IMAGE_SIZE=${IMAGE_SIZE:-14G}
 
