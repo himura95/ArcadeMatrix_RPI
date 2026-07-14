@@ -1,30 +1,16 @@
 #!/bin/bash
 set -e
 set -x
-echo "🔧 [chroot] Starting ArcadeMatrix OS Setup..."
+echo "🔧 [chroot] Starting ArcadeMatrix OS Setup via autoInstall.sh..."
 
-# Disable interactive prompts
-export DEBIAN_FRONTEND=noninteractive
-
-echo "📦 [chroot] Installing dependencies..."
-apt-get update
-apt-get install -y python3 python3-pip python3-dev python3-pil python3-flask python3-venv git build-essential cython3 python3-psutil curl
-
-# Create ArcadeMatrix directory if missing and set permissions
 PROJ_DIR="/home/pi/ArcadeMatrix_RPi"
-chown -R pi:pi $PROJ_DIR || true
 cd $PROJ_DIR
 
-# Set up virtual environment
-python3 -m venv venv
-./venv/bin/pip install -r $PROJ_DIR/requirements.txt
+# 1. Run the base auto-installer
+chmod +x autoInstall.sh
+./autoInstall.sh
 
-echo "🛠️ [chroot] Compiling hzeller RGB Matrix Library..."
-git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
-cd rpi-rgb-led-matrix
-../venv/bin/pip install .
-cd ..
-
+# 2. Add extra Release-only steps (Obfuscation)
 echo "🔒 [chroot] Cythonizing source code for protection..."
 # Install Cython in venv
 ./venv/bin/pip install Cython
@@ -38,6 +24,7 @@ find api core engines -name "*.py" -type f | while read -r file; do
     rm "${file%.py}.c" || true
 done
 
+# 3. Add extra Release-only steps (DATA Partition)
 echo "🔗 [chroot] Configuring DATA partition..."
 DATA_UUID=$(cat /tmp/data_uuid.txt)
 
@@ -83,33 +70,6 @@ chown pi:pi $PROJ_DIR/data/conf.ini || true
 # Create symlink for conf.ini
 rm -f $PROJ_DIR/conf.ini || true
 ln -s $PROJ_DIR/data/conf.ini $PROJ_DIR/conf.ini
-
-echo "🔌 [chroot] Setting up Systemd Service..."
-SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
-cat > $SERVICE_FILE << EOF
-[Unit]
-Description=ArcadeMatrix RPi Daemon
-After=network.target
-
-[Service]
-ExecStart=$PROJ_DIR/venv/bin/python $PROJ_DIR/main.py
-WorkingDirectory=$PROJ_DIR
-StandardOutput=inherit
-StandardError=inherit
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl enable arcadematrix.service
-
-echo "🚫 [chroot] Applying Anti-Flicker tweaks (Audio Disable)..."
-cat > /etc/modprobe.d/snd-blacklist.conf << EOF
-blacklist snd_bcm2835
-EOF
-sed -i 's/dtparam=audio=on/dtparam=audio=off/g' /boot/firmware/config.txt || true
 
 echo "🧹 [chroot] Cleaning up..."
 rm -rf /tmp/chroot_setup.sh /tmp/data_uuid.txt
