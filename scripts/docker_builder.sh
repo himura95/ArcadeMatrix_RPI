@@ -22,7 +22,7 @@ echo "📏 Expanding image to total size of $IMAGE_SIZE for DATA partition..."
 truncate -s $IMAGE_SIZE $IMG_FILE
 
 echo "📏 Expanding ROOT partition (p2) to 4GB to make room for build tools..."
-parted -s $IMG_FILE resizepart 2 4000M
+parted -s $IMG_FILE resizepart 2 4096MiB
 
 echo "💽 Creating 3rd partition (DATA)..."
 # Get the starting sector for the new partition
@@ -37,7 +37,7 @@ NEXT_SECTOR=$((START_SECTOR + 1))
 parted -s $IMG_FILE mkpart primary fat32 ${NEXT_SECTOR}s 100%
 
 echo "🔧 Changing DATA partition type to 0x07 (exFAT/NTFS) for Windows/Mac compatibility..."
-sfdisk --part-type $IMG_FILE 3 7
+sfdisk --part-type $IMG_FILE 3 7 < /dev/null
 
 echo "🔗 Mounting partitions to loop devices..."
 LOOP_DEV=$(losetup -Pf --show $IMG_FILE)
