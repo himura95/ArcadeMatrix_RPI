@@ -67,9 +67,9 @@ class ArcadeMatrixApp:
         if self.config.wifi_ssid and not self.config.wifi_configured:
             logging.info(f"Attempting to configure Wi-Fi for SSID: {self.config.wifi_ssid}")
             try:
-                # Unblock Wi-Fi and set default country code to avoid rfkill block
-                subprocess.run('sudo rfkill unblock wifi', shell=True)
+                # Set country code BEFORE unblocking to satisfy hardware regulations
                 subprocess.run('sudo raspi-config nonint do_wifi_country FR', shell=True)
+                subprocess.run('sudo rfkill unblock wifi', shell=True)
                 
                 # Give the Wi-Fi adapter a few seconds to turn on and scan
                 import time
@@ -80,7 +80,7 @@ class ArcadeMatrixApp:
                 nm_content = f"""[connection]
 id={safe_ssid}
 type=wifi
-interface-name=wlan0
+autoconnect=true
 
 [wifi]
 mode=infrastructure
@@ -103,10 +103,12 @@ method=auto
                 
                 os.chmod(profile_path, 0o600)
                 
-                # Reload NetworkManager and apply
+                # Reload NetworkManager and force activation
                 subprocess.run('sudo nmcli connection reload', shell=True)
+                time.sleep(1)
+                subprocess.run(f'sudo nmcli connection up "{safe_ssid}"', shell=True)
                 
-                logging.info("Wi-Fi profile generated successfully. NetworkManager will auto-connect.")
+                logging.info("Wi-Fi profile generated and activated successfully.")
                 self.config.wifi_configured = True
                 self.config.save()
             except Exception as e:
