@@ -71,15 +71,44 @@ class ArcadeMatrixApp:
                 subprocess.run('sudo rfkill unblock wifi', shell=True)
                 subprocess.run('sudo raspi-config nonint do_wifi_country FR', shell=True)
                 
-                # Use nmcli to connect to Wi-Fi
-                cmd = f'sudo nmcli dev wifi connect "{self.config.wifi_ssid}" password "{self.config.wifi_pass}"'
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-                if result.returncode == 0:
-                    logging.info("Wi-Fi successfully connected via nmcli!")
-                    self.config.wifi_configured = True
-                    self.config.save()
-                else:
-                    logging.error(f"Failed to connect to Wi-Fi: {result.stderr}")
+                # Give the Wi-Fi adapter a few seconds to turn on and scan
+                import time
+                time.sleep(2)
+                
+                # Create a pure NetworkManager profile to avoid any nmcli scan race conditions
+                safe_ssid = self.config.wifi_ssid.replace(" ", "_").replace("/", "_")
+                nm_content = f"""[connection]
+id={safe_ssid}
+type=wifi
+interface-name=wlan0
+
+[wifi]
+mode=infrastructure
+ssid={self.config.wifi_ssid}
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk={self.config.wifi_pass}
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+"""
+                profile_path = f"/etc/NetworkManager/system-connections/{safe_ssid}.nmconnection"
+                with open(profile_path, "w") as f:
+                    f.write(nm_content)
+                
+                os.chmod(profile_path, 0o600)
+                
+                # Reload NetworkManager and apply
+                subprocess.run('sudo nmcli connection reload', shell=True)
+                
+                logging.info("Wi-Fi profile generated successfully. NetworkManager will auto-connect.")
+                self.config.wifi_configured = True
+                self.config.save()
             except Exception as e:
                 logging.error(f"Exception during Wi-Fi setup: {e}")
 
