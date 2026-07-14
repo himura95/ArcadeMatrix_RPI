@@ -81,6 +81,10 @@ mkdir -p /mnt/rootfs/home/pi/ArcadeMatrix_RPi/data
 # Use mount.exfat-fuse if available, fallback to standard mount
 mount.exfat-fuse $PART_DATA /mnt/rootfs/home/pi/ArcadeMatrix_RPi/data || mount -t exfat $PART_DATA /mnt/rootfs/home/pi/ArcadeMatrix_RPi/data
 
+echo "🔑 Enabling SSH and setting up default 'pi' user..."
+touch /mnt/rootfs/boot/firmware/ssh
+echo 'pi:$6$QM6/3dOlZrhCz7hG$RmgUadMoSC0mutMdHHhzjd52prRdb3zFcgOp5yZhza8LHQBwh.RbaFpBlf1YJSws6qz/H46VLIJ6YtQq6cNR/.' > /mnt/rootfs/boot/firmware/userconf.txt
+
 echo "🛠️ Preparing CHROOT environment..."
 cp /usr/bin/qemu-aarch64-static /mnt/rootfs/usr/bin/
 mount --bind /dev /mnt/rootfs/dev
