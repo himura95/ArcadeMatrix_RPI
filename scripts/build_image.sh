@@ -28,7 +28,7 @@ docker run --rm --privileged \
     -e IMAGE_SIZE="$IMAGE_SIZE" \
     -v "$(pwd)":/workspace \
     -w /workspace \
-    ubuntu:22.04 \
+    debian:bookworm \
     /bin/bash /workspace/scripts/docker_builder.sh
 
 echo "=========================================================="
