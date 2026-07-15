@@ -134,6 +134,7 @@
                 <option value="26">Pac-Man Clock</option>
                 <option value="27">Versus Health Bar</option>
                 <option value="28">Slot Machine Clock</option>
+                <option value="29">Tetris Gameboy Clock</option>
               </select>
               <button id="btn-apply-clock" class="btn primary" style="width:100%; margin-top:1rem;" data-i18n="btn_apply">Apply</button>
             </div>
@@ -401,6 +402,7 @@
                   <option value="26">Pac-Man Clock</option>
                   <option value="27">Versus Health Bar</option>
                   <option value="28">Slot Machine</option>
+                  <option value="29">Tetris Gameboy Clock</option>
                 </select>
               </div>
             </div>
@@ -493,6 +495,7 @@
                   <option value="26">Pac-Man Date</option>
                   <option value="27">Versus Health Bar</option>
                   <option value="28">Slot Machine</option>
+                  <option value="29">Tetris Gameboy Clock</option>
                 </select>
               </div>
             </div>
@@ -589,6 +592,10 @@
                </div>
             </div>
             <p style="text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 1rem;">Auto-refreshing every 3 seconds</p>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+              <button id="btn-reboot" class="btn secondary" style="flex: 1; border-color: #f59e0b; color: #f59e0b;">Reboot System</button>
+              <button id="btn-shutdown" class="btn secondary" style="flex: 1; border-color: #ef4444; color: #ef4444;">Shutdown</button>
+            </div>
           </div>
         </div>
       </section>
@@ -611,41 +618,73 @@
           if (clockFontSelect) clockFontSelect.innerHTML = optionsHtml;
           if (dateFontSelect) dateFontSelect.innerHTML = optionsHtml;
           
-          // Re-trigger the load to set the correct selected option
-          fetch("/api/settings").then(r => r.json()).then(t => {
-            if (t.clock_font && clockFontSelect) clockFontSelect.value = t.clock_font;
-            if (t.date_font && dateFontSelect) dateFontSelect.value = t.date_font;
-            
-            // Populate matrix hardware
-            if (t.matrix_rows) document.getElementById('setting-matrix-rows').value = t.matrix_rows;
-            if (t.matrix_cols) document.getElementById('setting-matrix-cols').value = t.matrix_cols;
-            if (t.matrix_chain) document.getElementById('setting-matrix-chain').value = t.matrix_chain;
-            if (t.matrix_parallel) document.getElementById('setting-matrix-parallel').value = t.matrix_parallel;
-            if (t.matrix_mapping) document.getElementById('setting-matrix-mapping').value = t.matrix_mapping;
-            if (t.matrix_slowdown !== undefined) document.getElementById('setting-matrix-slowdown').value = t.matrix_slowdown;
-            if (t.sprite_count !== undefined) {
-               const el = document.getElementById('setting-sprite-enable');
-               if(el) el.checked = (t.sprite_count > 0);
-            }
-            if (t.weather_api_key) document.getElementById('setting-weather-api-key').value = t.weather_api_key;
-            if (t.weather_city) document.getElementById('setting-weather-city').value = t.weather_city;
-            if (t.weather_offset_x !== undefined) document.getElementById('setting-weather-offset-x').value = t.weather_offset_x;
-            if (t.weather_offset_y !== undefined) document.getElementById('setting-weather-offset-y').value = t.weather_offset_y;
-            if (t.matrix_rgb_sequence) document.getElementById('setting-matrix-rgb-sequence').value = t.matrix_rgb_sequence;
-            if (t.matrix_pwm_bits !== undefined) document.getElementById('setting-matrix-pwm-bits').value = t.matrix_pwm_bits;
-            if (t.matrix_pwm_lsb_nanoseconds !== undefined) document.getElementById('setting-matrix-pwm-lsb-nanoseconds').value = t.matrix_pwm_lsb_nanoseconds;
-            
-            // MQTT / Network
-            if (t.mqtt_enabled !== undefined) {
-               const el = document.getElementById('setting-mqtt-enable');
-               if (el) el.value = t.mqtt_enabled ? "1" : "0";
-            }
-            if (t.mqtt_broker) document.getElementById('setting-mqtt-broker').value = t.mqtt_broker;
-            if (t.mqtt_port !== undefined) document.getElementById('setting-mqtt-port').value = t.mqtt_port;
-            if (t.mqtt_user) document.getElementById('setting-mqtt-user').value = t.mqtt_user;
+        }
+      } catch (e) {
+        console.error("Failed to load dynamic fonts", e);
+      }
+      
+      // Load general settings regardless of fonts success
+      fetch("/api/settings").then(r => r.json()).then(t => {
+        const clockFontSelect = document.getElementById("setting-clock-font");
+        const dateFontSelect = document.getElementById("setting-date-font");
+        
+        if (t.clock_font && clockFontSelect) clockFontSelect.value = t.clock_font;
+        if (t.date_font && dateFontSelect) dateFontSelect.value = t.date_font;
+        
+        // Populate matrix hardware
+        if (t.matrix_rows) document.getElementById('setting-matrix-rows').value = t.matrix_rows;
+        if (t.matrix_cols) document.getElementById('setting-matrix-cols').value = t.matrix_cols;
+        if (t.matrix_chain) document.getElementById('setting-matrix-chain').value = t.matrix_chain;
+        if (t.matrix_parallel) document.getElementById('setting-matrix-parallel').value = t.matrix_parallel;
+        if (t.matrix_mapping) document.getElementById('setting-matrix-mapping').value = t.matrix_mapping;
+        if (t.matrix_slowdown !== undefined) document.getElementById('setting-matrix-slowdown').value = t.matrix_slowdown;
+        if (t.sprite_count !== undefined) {
+            const el = document.getElementById('setting-sprite-enable');
+            if(el) el.checked = (t.sprite_count > 0);
+        }
+        if (t.weather_api_key) document.getElementById('setting-weather-api-key').value = t.weather_api_key;
+        if (t.weather_city) document.getElementById('setting-weather-city').value = t.weather_city;
+        if (t.weather_offset_x !== undefined) document.getElementById('setting-weather-offset-x').value = t.weather_offset_x;
+        if (t.weather_offset_y !== undefined) document.getElementById('setting-weather-offset-y').value = t.weather_offset_y;
+        if (t.matrix_rgb_sequence) document.getElementById('setting-matrix-rgb-sequence').value = t.matrix_rgb_sequence;
+        if (t.matrix_pwm_bits !== undefined) document.getElementById('setting-matrix-pwm-bits').value = t.matrix_pwm_bits;
+        if (t.matrix_pwm_lsb_nanoseconds !== undefined) document.getElementById('setting-matrix-pwm-lsb-nanoseconds').value = t.matrix_pwm_lsb_nanoseconds;
+        
+        // MQTT / Network
+        if (t.mqtt_enabled !== undefined) {
+            const el = document.getElementById('setting-mqtt-enable');
+            if (el) el.value = t.mqtt_enabled ? "1" : "0";
+        }
+        if (t.mqtt_broker) document.getElementById('setting-mqtt-broker').value = t.mqtt_broker;
+        if (t.mqtt_port !== undefined) document.getElementById('setting-mqtt-port').value = t.mqtt_port;
+        if (t.mqtt_user) document.getElementById('setting-mqtt-user').value = t.mqtt_user;
+        if (t.wifi_ssid) document.getElementById('setting-wifi-ssid').value = t.wifi_ssid;
+        if (t.wifi_pass) document.getElementById('setting-wifi-pass').value = t.wifi_pass;
+      }).catch(e => console.error("Failed to load settings", e));
+      
+      const btnReboot = document.getElementById('btn-reboot');
+      if (btnReboot) {
+          btnReboot.addEventListener('click', () => {
+              if (confirm("Are you sure you want to reboot the Raspberry Pi?")) {
+                  fetch('/api/system/reboot', { method: 'POST' });
+                  alert("Rebooting... The UI will be unavailable for a minute.");
+              }
           });
-          
-          document.getElementById('btn-save-hardware').addEventListener('click', () => {
+      }
+      
+      const btnShutdown = document.getElementById('btn-shutdown');
+      if (btnShutdown) {
+          btnShutdown.addEventListener('click', () => {
+              if (confirm("Are you sure you want to shut down the Raspberry Pi?")) {
+                  fetch('/api/system/shutdown', { method: 'POST' });
+                  alert("Shutting down... You will need to unplug and replug the power to start it again.");
+              }
+          });
+      }
+
+      const saveHardwareBtn = document.getElementById('btn-save-hardware');
+      if (saveHardwareBtn) {
+          saveHardwareBtn.addEventListener('click', () => {
              const payload = {
                 matrix_rows: document.getElementById('setting-matrix-rows').value,
                 matrix_cols: document.getElementById('setting-matrix-cols').value,
@@ -666,9 +705,6 @@
                  setTimeout(() => window.location.reload(), 3000);
              });
           });
-        }
-      } catch (e) {
-        console.error("Failed to load dynamic fonts", e);
       }
       
       // Fix Rotation List Reordering
@@ -893,12 +929,12 @@
         });
       }
 
-      // Fix Network Save
-      const saveNetworkBtn = document.getElementById('btn-save-network');
-      if (saveNetworkBtn) {
-        const newSaveNetworkBtn = saveNetworkBtn.cloneNode(true);
-        saveNetworkBtn.parentNode.replaceChild(newSaveNetworkBtn, saveNetworkBtn);
-        newSaveNetworkBtn.addEventListener('click', async () => {
+      // Fix MQTT Save
+      const saveMqttBtn = document.getElementById('btn-save-network');
+      if (saveMqttBtn) {
+        const newSaveMqttBtn = saveMqttBtn.cloneNode(true);
+        saveMqttBtn.parentNode.replaceChild(newSaveMqttBtn, saveMqttBtn);
+        newSaveMqttBtn.addEventListener('click', async () => {
           try {
             const safeInt = (id, def) => { const el = document.getElementById(id); return el && !isNaN(parseInt(el.value, 10)) ? parseInt(el.value, 10) : def; };
             const safeStr = (id, def) => { const el = document.getElementById(id); return el ? el.value : def; };
@@ -914,9 +950,9 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
-            const oldText = newSaveNetworkBtn.innerText;
-            newSaveNetworkBtn.innerText = 'Saved ✔️';
-            setTimeout(() => newSaveNetworkBtn.innerText = oldText, 2000);
+            const oldText = newSaveMqttBtn.innerText;
+            newSaveMqttBtn.innerText = 'Saved ✔️';
+            setTimeout(() => newSaveMqttBtn.innerText = oldText, 2000);
           } catch(err) {
             console.error('Failed to save network', err);
           }
