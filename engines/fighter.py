@@ -175,12 +175,9 @@ class FighterEngine:
         if not a1 or not a2: 
             return
         
-        # Dynamic Alignment: Both characters are extracted at 1:1 scale and their head is at 0.
-        # P1 is the tallest, so his head must touch the top of the screen (y=0).
-        # P2 is smaller, so he must be pushed down by the difference in height to maintain 1:1 ground.
-        fight_max_h = max(c1[5], c2[5])
-        y1 = fight_max_h - c1[5]
-        y2 = fight_max_h - c2[5]
+        # Align characters so their ground (c[5]) touches the bottom of the LED matrix
+        y1 = self.config.matrix_height - c1[5]
+        y2 = self.config.matrix_height - c2[5]
         
         self.p1 = self._init_player()
         self.p1['name'] = c1[1]
