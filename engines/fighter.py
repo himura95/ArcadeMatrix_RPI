@@ -145,7 +145,7 @@ class FighterEngine:
 
     def _get_fighters_list(self):
         index_data = self._load_index()
-        fighters = [(self.primary_dir, name, data['height'], data.get('has_special', False), data.get('has_super', False), data.get('ground_y', 0), data.get('origin_x', 0), data.get('width', 32)) for name, data in index_data.items()]
+        fighters = [(self.primary_dir, name, data['height'], data.get('has_special', False), data.get('has_super', False), data.get('ground_y', 0), data.get('origin_x', 0), data.get('width', 32), data.get('head_y', 0)) for name, data in index_data.items()]
         return fighters
 
     def _start_fight_thread(self):
@@ -175,9 +175,13 @@ class FighterEngine:
         if not a1 or not a2: 
             return
         
-        # Align characters so their ground (c[5]) touches the bottom of the LED matrix
-        y1 = self.config.matrix_height - c1[5]
-        y2 = self.config.matrix_height - c2[5]
+        # Align characters so their ACTUAL standing head touches the top of the screen (y=0)
+        c1_ground_at_0 = c1[5] - c1[8]
+        c2_ground_at_0 = c2[5] - c2[8]
+        fight_max_h = max(c1_ground_at_0, c2_ground_at_0)
+        
+        y1 = fight_max_h - c1[5]
+        y2 = fight_max_h - c2[5]
         
         self.p1 = self._init_player()
         self.p1['name'] = c1[1]

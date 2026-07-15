@@ -165,6 +165,7 @@ def process_character(char_dir, out_dir):
     all_valid_frames = {}
     global_min_x, global_min_y, global_max_x, global_max_y = 9999, 9999, -9999, -9999
     walk_h = None
+    stand_head_y_local = 0
     
     for anim_id, anim_name in required_anims.items():
         if anim_id not in air.animations: continue
@@ -205,6 +206,7 @@ def process_character(char_dir, out_dir):
                 l_min = min([fr['min_y'] for fr in valid_frames])
                 l_max = max([fr['max_y'] for fr in valid_frames])
                 walk_h = l_max - l_min
+                stand_head_y_local = l_min
 
     if not all_valid_frames: return False
     if walk_h is None or walk_h <= 0: walk_h = global_max_y - global_min_y
@@ -237,6 +239,7 @@ def process_character(char_dir, out_dir):
         
     ground_y = int(-global_min_y * scale)
     origin_x = int(-global_min_x * scale)
+    head_y = int((-global_min_y + stand_head_y_local) * scale)
 
     # Pass 2: Render and save frames
     char_out_dir = os.path.join(out_dir, char_name)
@@ -316,6 +319,7 @@ def process_character(char_dir, out_dir):
     return {
         'height': canvas_h,
         'ground_y': ground_y,
+        'head_y': head_y,
         'origin_x': origin_x,
         'width': canvas_w,
         'has_special': special_count > 0,
