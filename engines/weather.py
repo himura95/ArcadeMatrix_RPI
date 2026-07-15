@@ -58,19 +58,36 @@ class WeatherEngine:
             
         # load icon if available
         icon_path = f"weather_icons/{self.weather_data['icon']}.png"
+        
+        # Download icon if it doesn't exist
+        if not os.path.exists(icon_path):
+            os.makedirs("weather_icons", exist_ok=True)
+            url = f"http://openweathermap.org/img/wn/{self.weather_data['icon']}@2x.png"
+            try:
+                response = requests.get(url, timeout=5)
+                if response.status_code == 200:
+                    with open(icon_path, 'wb') as f:
+                        f.write(response.content)
+            except Exception as e:
+                logging.error(f"Failed to download weather icon: {e}")
+
         icon_img = None
         if os.path.exists(icon_path):
             try:
                 icon_img = Image.open(icon_path).convert('RGBA')
                 # scale icon according to matrix height (leave some padding)
                 icon_size = self.config.matrix_height - 4
-                try:
-                    resample_filter = Image.Resampling.NEAREST
-                except AttributeError:
-                    resample_filter = Image.NEAREST
-                icon_img = icon_img.resize((icon_size, icon_size), resample_filter)
+                icon_img = icon_img.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
             except Exception as e:
                 logging.error(f"Could not load weather icon {icon_path}: {e}")
+
+        # Choose a nice font
+        try:
+            # Scale font size based on matrix height
+            font_size = 14 if self.config.matrix_height <= 32 else 24
+            font = ImageFont.truetype("fonts/PressStart2P.ttf", font_size)
+        except:
+            font = self.font
 
         while time.time() - start_time < duration_sec:
             if getattr(self.config, 'reload_flag', False):
