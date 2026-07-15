@@ -17,7 +17,8 @@ class RotationManager:
             'date': DateEngine(matrix_wrapper, config, self.fighter_engine),
             'weather': WeatherEngine(matrix_wrapper, config, self.fighter_engine),
             'network': NetworkEngine(matrix_wrapper, config, self.fighter_engine),
-            'gifs': GifEngine(matrix_wrapper, config)
+            'gifs': GifEngine(matrix_wrapper, config),
+            'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(matrix_wrapper, config)
         }
 
     def start_loop(self):
@@ -43,7 +44,8 @@ class RotationManager:
                         'date': DateEngine(self.mw, self.config, self.fighter_engine),
                         'weather': WeatherEngine(self.mw, self.config, self.fighter_engine),
                         'network': NetworkEngine(self.mw, self.config, self.fighter_engine),
-                        'gifs': GifEngine(self.mw, self.config)
+                        'gifs': GifEngine(self.mw, self.config),
+                        'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(self.mw, self.config)
                     }
                     break
                     
@@ -67,6 +69,8 @@ class RotationManager:
                     engine.run(86400 if is_single else 10)
                 elif engine_name == 'gifs':
                     engine.run(self.config.idle_gifs_count)
+                elif engine_name == 'message':
+                    engine.run()
                     
                 self.fighter_engine.reset()
                 

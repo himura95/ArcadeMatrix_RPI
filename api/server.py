@@ -239,6 +239,10 @@ def api_sprites_playlists_save():
 
 @app.route('/api/message', methods=['POST'])
 def api_message():
+    data = request.json
+    config.message_payload = data
+    config.force_engine = 'message'
+    config.reload_flag = True
     return jsonify({'status': 'success'})
 
 @app.route('/api/clock', methods=['POST'])
