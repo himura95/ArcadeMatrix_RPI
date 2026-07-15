@@ -377,6 +377,6 @@ if __name__ == "__main__":
             
         with open(os.path.join(out_dir, "index.txt"), "w") as f:
             for name, info in index_data.items():
-                f.write(f"{name},{info['height']},{info['ground_y']},{info['origin_x']},{info['width']}\n")
+                f.write(f"{name},{info['height']},{info['ground_y']},{info['origin_x']},{info['width']},{info['head_y']}\n")
                 
         print(f"Successfully exported {success_count} characters for H={TARGET_HEIGHT} in {time.time() - start_time:.1f}s.")
