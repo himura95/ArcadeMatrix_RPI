@@ -54,7 +54,7 @@ class TetrisClock:
             
         return targets_by_char
 
-    def tick(self, img, time_str, font, offset_x, offset_y):
+    def tick(self, img, time_str, font, offset_x, offset_y, is_gameboy=False):
         draw = ImageDraw.Draw(img)
         
         if self.last_time_str != time_str:
