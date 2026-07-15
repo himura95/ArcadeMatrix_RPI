@@ -148,7 +148,7 @@ class FighterEngine:
         fighters = [(self.primary_dir, name, data['height'], data.get('has_special', False), data.get('has_super', False), data.get('ground_y', 0), data.get('origin_x', 0), data.get('width', 32)) for name, data in index_data.items()]
         return fighters
 
-    def _start_fight(self):
+    def _start_fight_thread(self):
         self.hit_stop_until = 0
         self.shake_frames = 0
         
@@ -209,6 +209,14 @@ class FighterEngine:
         self.active = True
         self.last_move = time.time() * 1000
         self.fight_end = 0
+        self.loading = False
+
+    def _start_fight(self):
+        import threading
+        if getattr(self, 'loading', False):
+            return
+        self.loading = True
+        threading.Thread(target=self._start_fight_thread, daemon=True).start()
 
     def _update_anim(self, p, now):
         state = p['state']
@@ -258,8 +266,9 @@ class FighterEngine:
         
         now = time.time() * 1000
         if not self.active:
-            if self.fight_end == 0 or now - self.fight_end > 2000:
-                self._start_fight()
+            if not getattr(self, 'loading', False):
+                if self.fight_end == 0 or now - self.fight_end > 2000:
+                    self._start_fight()
             return bg_img
             
         self._update_anim(self.p1, now)
