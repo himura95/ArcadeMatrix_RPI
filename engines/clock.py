@@ -279,6 +279,6 @@ class ClockEngine:
             canvas.SetImage(img)
             canvas = self.mw.swap_canvas(canvas)
             
-            # Update faster if cyberpunk, matrix theme, pong, tetris, or fighter engine is enabled
-            fast_update = self.config.time_theme in [18, 21, 22, 23] or (self.fighter_engine and self.config.idle_sprite_count > 0)
+            # Update faster if cyberpunk, matrix theme, pong, tetris, pacman, slots, or gameboy tetris is enabled
+            fast_update = self.config.time_theme in [18, 21, 22, 23, 26, 28, 29] or (self.fighter_engine and self.config.idle_sprite_count > 0)
             time.sleep(0.04 if fast_update else 1)
