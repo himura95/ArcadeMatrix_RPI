@@ -43,7 +43,9 @@ class FighterEngine:
         """Load a .fgt file and return (frames, delays) or (None, None)."""
         if not os.path.exists(filepath): 
             return None, None
-        FORCE_SWAP_RB = False # Set to False since the folder has mixed encodings
+            
+        # No color swapping needed anymore since mugen_extractor has been fixed.
+        FORCE_SWAP_RB = False
         try:
             with open(filepath, 'rb') as f:
                 magic = f.read(4)
@@ -145,7 +147,9 @@ class FighterEngine:
             return
         
         c1 = random.choice(fighters)
-        valid_opponents = [f for f in fighters if f != c1 and 0.8 * c1[2] <= f[2] <= 1.2 * c1[2]]
+        # User constraint: Opponent must be max 20% smaller, and NEVER taller than P1.
+        # Height is stored in c1[5] (ground_y is now exactly the character's original height).
+        valid_opponents = [f for f in fighters if f != c1 and 0.8 * c1[5] <= f[5] <= c1[5]]
         
         if not valid_opponents:
             # Fallback if no matching size
@@ -161,10 +165,12 @@ class FighterEngine:
         if not a1 or not a2: 
             return
         
-        # Virtual Ground
-        matrix_ground = self.config.matrix_height - 1
-        y1 = matrix_ground - c1[5]
-        y2 = matrix_ground - c2[5]
+        # Dynamic Alignment: Both characters are extracted at 1:1 scale and their head is at 0.
+        # P1 is the tallest, so his head must touch the top of the screen (y=0).
+        # P2 is smaller, so he must be pushed down by the difference in height to maintain 1:1 ground.
+        fight_max_h = max(c1[5], c2[5])
+        y1 = fight_max_h - c1[5]
+        y2 = fight_max_h - c2[5]
         
         self.p1 = self._init_player()
         self.p1['name'] = c1[1]

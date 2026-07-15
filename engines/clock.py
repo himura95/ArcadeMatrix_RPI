@@ -156,9 +156,10 @@ class ClockEngine:
             if self.config.time_theme == 22:
                 # Pong Clock
                 img = self.pong_clock.tick(img, time_str, font, self.config.clock_color_1, self.config.clock_color_2)
-            elif self.config.time_theme == 23:
-                # Tetris Drop Clock
-                img = self.tetris_clock.tick(img, time_str, font, self.config.time_offset_x, self.config.time_offset_y)
+            elif self.config.time_theme == 23 or self.config.time_theme == 29:
+                # Tetris Drop Clock (23=Multicolor, 29=Gameboy)
+                is_gb = (self.config.time_theme == 29)
+                img = self.tetris_clock.tick(img, time_str, font, self.config.time_offset_x, self.config.time_offset_y, is_gameboy=is_gb)
             elif self.config.time_theme == 24:
                 # Word Clock
                 img = self.word_clock.tick(img, time_str, font, self.config.clock_color_1, self.config.clock_color_2)

@@ -75,17 +75,12 @@ CHAIN=${CHAIN:-1}
 read -p "Parallel Chains [1]: " PARALLEL
 PARALLEL=${PARALLEL:-1}
 
-# Write initial configuration to conf.ini
-cat <<EOT > conf.ini
-[MATRIX]
-ROWS = $ROWS
-COLS = $COLS
-HARDWARE_MAPPING = $MAPPING
-CHAIN = $CHAIN
-PARALLEL = $PARALLEL
-EOT
-echo "Saved initial Matrix configuration to conf.ini"
-echo ""
+if [ ! -f "conf.ini" ]; then
+    echo "conf.ini not found. Please ensure it is present in the repository."
+else
+    echo "conf.ini found. Preserving existing configuration."
+fi
+
 
 # 5. Install hzeller's rgbmatrix library
 if [ ! -d "rpi-rgb-led-matrix" ]; then

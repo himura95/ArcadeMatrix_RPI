@@ -49,17 +49,12 @@ COLS=64
 CHAIN=1
 PARALLEL=1
 
-# Write initial configuration to conf.ini
-cat <<EOT > conf.ini
-[MATRIX]
-ROWS = $ROWS
-COLS = $COLS
-HARDWARE_MAPPING = $MAPPING
-CHAIN = $CHAIN
-PARALLEL = $PARALLEL
-EOT
-echo "Saved auto Matrix configuration to conf.ini"
-echo ""
+if [ ! -f "conf.ini" ]; then
+    echo "conf.ini not found. Please ensure it is present in the repository."
+else
+    echo "conf.ini found. Preserving existing configuration."
+fi
+
 
 # 5. Install hzeller's rgbmatrix library
 if [ ! -d "rpi-rgb-led-matrix" ]; then
@@ -93,6 +88,12 @@ if grep -q "dtparam=audio=on" "$CONFIG_TXT"; then
     echo "Disabled audio in $CONFIG_TXT"
 elif ! grep -q "dtparam=audio=off" "$CONFIG_TXT"; then
     echo "dtparam=audio=off" | sudo tee -a "$CONFIG_TXT" > /dev/null
+fi
+
+# Disable HDMI audio loaded by vc4 driver which causes PWM conflicts
+if grep -q "dtoverlay=vc4-kms-v3d$" "$CONFIG_TXT"; then
+    sudo sed -i 's/dtoverlay=vc4-kms-v3d$/dtoverlay=vc4-kms-v3d,noaudio/g' "$CONFIG_TXT"
+    echo "Disabled vc4 HDMI audio in $CONFIG_TXT"
 fi
 
 # 7. Setup Systemd Service

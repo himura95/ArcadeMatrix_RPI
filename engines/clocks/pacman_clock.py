@@ -13,6 +13,8 @@ class PacManClock:
         self.old_time_str = ""
         self.new_time_str = ""
         self.ghost_colors = [(255, 0, 0), (255, 184, 255), (0, 255, 255), (255, 184, 82)]
+        self.radius = max(4, int(6 * self.h / 32.0))
+        self.speed = max(1.5, int(3 * self.w / 64.0))
 
     def draw_pacman(self, draw, x, y, radius, mouth_angle, facing_right=True):
         if facing_right:
@@ -78,7 +80,7 @@ class PacManClock:
                 draw.point((int(px), int(py)), fill=(255, 183, 174))
         else:
             # Transition: Pacman runs across eating the old time, ghosts follow
-            self.pac_x += 3
+            self.pac_x += self.speed
             
             # Mouth animation
             mouth_angle = int(abs(math.sin(self.anim_frame * 0.5)) * 45)
@@ -99,13 +101,13 @@ class PacManClock:
                     draw.rectangle([reveal_x, 0, self.w, self.h], fill=(0,0,0))
 
                 # Draw Pacman
-                self.draw_pacman(draw, int(self.pac_x), self.h // 2, 6, mouth_angle, True)
+                self.draw_pacman(draw, int(self.pac_x), self.h // 2, self.radius, mouth_angle, True)
                 
                 # Draw Ghosts following
                 for i, g_col in enumerate(self.ghost_colors):
-                    gx = self.pac_x - 15 - (i * 12)
-                    gy = self.h // 2 + math.sin(self.anim_frame * 0.2 + i) * 2
-                    self.draw_ghost(draw, int(gx), int(gy), 5, g_col, self.anim_frame)
+                    gx = self.pac_x - (self.radius * 2.5) - (i * self.radius * 2)
+                    gy = self.h // 2 + math.sin(self.anim_frame * 0.2 + i) * (self.radius / 3.0)
+                    self.draw_ghost(draw, int(gx), int(gy), self.radius - 1, g_col, self.anim_frame)
             else:
                 self.transitioning = False
                 self.last_minute = now_min

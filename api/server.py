@@ -23,8 +23,12 @@ def static_proxy(path):
 @app.route('/api/fonts', methods=['GET'])
 def api_fonts():
     try:
-        fonts = [f for f in os.listdir("fonts") if f.lower().endswith(('.ttf', '.otf', '.bdf'))]
-    except Exception:
+        # Use os.getcwd() because Cython obfuscation breaks __file__ paths
+        base_dir = os.getcwd()
+        fonts_dir = os.path.join(base_dir, "fonts")
+        fonts = [f for f in os.listdir(fonts_dir) if f.lower().endswith(('.ttf', '.otf', '.bdf'))]
+    except Exception as e:
+        logging.error(f"Failed to list fonts: {e}")
         fonts = []
     return jsonify(fonts)
 
@@ -78,6 +82,10 @@ def api_settings():
             'sprite_count': config.idle_sprite_count,
             'weather_api_key': config.weather_api,
             'weather_city': config.weather_city,
+            'wifi_ssid': config.wifi_ssid,
+            'wifi_pass': config.wifi_pass,
+            'mqtt_user': config.mqtt_user,
+            'mqtt_pass': config.mqtt_pass,
         })
     elif request.method == 'POST':
         data = request.json
@@ -233,6 +241,7 @@ def api_clock():
     if 'clock_theme' in data:
         config.time_theme = int(data['clock_theme'])
         config.save()
+        config.reload_flag = True
     return jsonify({'status': 'success'})
 
 @app.route('/api/system_info', methods=['GET'])
@@ -286,6 +295,18 @@ def api_wifi():
         return jsonify({'status': 'success', 'message': 'Connected to Wi-Fi successfully!'})
     else:
         return jsonify({'status': 'error', 'message': f'Failed to connect: {result.stderr}'}), 500
+
+@app.route('/api/system/reboot', methods=['POST'])
+def api_reboot():
+    import subprocess
+    subprocess.Popen("sleep 1 && sudo reboot", shell=True)
+    return jsonify({'status': 'success', 'message': 'Rebooting system...'})
+
+@app.route('/api/system/shutdown', methods=['POST'])
+def api_shutdown():
+    import subprocess
+    subprocess.Popen("sleep 1 && sudo shutdown now", shell=True)
+    return jsonify({'status': 'success', 'message': 'Shutting down system...'})
 
 def run_server(port=8080):
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)

@@ -37,6 +37,14 @@ class RotationManager:
                     
                 if getattr(self.config, 'reload_flag', False):
                     self.config.reload_flag = False
+                    # Completely recreate engines so internal state (e.g. animated clocks) resets
+                    self.engines = {
+                        'clock': ClockEngine(self.mw, self.config, self.fighter_engine),
+                        'date': DateEngine(self.mw, self.config, self.fighter_engine),
+                        'weather': WeatherEngine(self.mw, self.config, self.fighter_engine),
+                        'network': NetworkEngine(self.mw, self.config, self.fighter_engine),
+                        'gifs': GifEngine(self.mw, self.config)
+                    }
                     break
                     
                 engine_name = engine_name.strip()

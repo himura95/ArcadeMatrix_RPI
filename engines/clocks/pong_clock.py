@@ -9,12 +9,12 @@ class PongClock:
         self.h = height
         self.ball_x = width // 2
         self.ball_y = height // 2
-        self.ball_dx = 2.0
-        self.ball_dy = 1.5
-        self.ball_size = 2
+        self.ball_dx = max(1.5, self.w / 40.0)
+        self.ball_dy = max(1.0, self.h / 30.0)
+        self.ball_size = max(2, self.h // 16)
         
-        self.pad_h = 12
-        self.pad_w = 2
+        self.pad_h = max(12, self.h // 3)
+        self.pad_w = max(2, self.w // 32)
         self.p1_y = (height - self.pad_h) // 2
         self.p2_y = (height - self.pad_h) // 2
         
@@ -26,10 +26,10 @@ class PongClock:
         self.ball_dy = random.uniform(-1.5, 1.5)
         if left_served:
             self.ball_x = self.pad_w + 1
-            self.ball_dx = 2.0
+            self.ball_dx = max(1.5, self.w / 40.0)
         else:
             self.ball_x = self.w - self.pad_w - 3
-            self.ball_dx = -2.0
+            self.ball_dx = -max(1.5, self.w / 40.0)
 
     def tick(self, img, time_str, font, color1, color2):
         draw = ImageDraw.Draw(img)
@@ -110,8 +110,10 @@ class PongClock:
                 self.ball_dy += (self.ball_y - (self.p2_y + self.pad_h/2)) * 0.2
                 
         # Speed cap
-        self.ball_dx = max(-4.0, min(4.0, self.ball_dx))
-        self.ball_dy = max(-3.0, min(3.0, self.ball_dy))
+        max_speed_x = self.w / 15.0
+        max_speed_y = self.h / 15.0
+        self.ball_dx = max(-max_speed_x, min(max_speed_x, self.ball_dx))
+        self.ball_dy = max(-max_speed_y, min(max_speed_y, self.ball_dy))
         
         # Scoring (Out of bounds)
         if self.ball_x < -10:

@@ -3,10 +3,9 @@ import os
 import logging
 
 class Config:
-    def __init__(self, config_file="conf.ini"):
+    def __init__(self, config_file="data/conf.ini"):
         self.config_file = config_file
         self.parser = configparser.ConfigParser()
-        self.parser.optionxform = str  # Preserve case for keys
         self.load_defaults()
         self.load()
 
@@ -83,6 +82,11 @@ class Config:
         self.standby_wake_up = "07:00"
 
     def load(self):
+        # Always prefer the data partition's conf.ini if it exists
+        data_conf = os.path.join(os.getcwd(), "data", "conf.ini")
+        if os.path.exists(data_conf):
+            self.config_file = data_conf
+            
         if not os.path.exists(self.config_file):
             logging.warning(f"Config file {self.config_file} not found. Using defaults.")
             return

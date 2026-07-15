@@ -11,7 +11,9 @@ class TetrisClock:
             (255, 0, 0), (0, 255, 0), (0, 0, 255), 
             (255, 255, 0), (255, 165, 0), (0, 255, 255), (255, 0, 255)
         ]
-        self.block_size = 2 # 2x2 pixels per block for high res look
+        self.gb_colors = [(15, 56, 15), (48, 98, 48), (139, 172, 15), (155, 188, 15)]
+        self.block_size = max(2, self.h // 16)
+        self.base_dy = self.h / 15.0
         
     def _build_targets(self, time_str, font, offset_x, offset_y):
         targets_by_char = []
@@ -56,11 +58,12 @@ class TetrisClock:
         draw = ImageDraw.Draw(img)
         
         if self.last_time_str != time_str:
+            palette = self.gb_colors if is_gameboy else self.colors
             if len(self.last_time_str) != len(time_str) or not self.blocks:
                 # Major change (or init): Drop old blocks out
                 for b in self.blocks:
                     b['state'] = 'out'
-                    b['dy'] = random.uniform(1.0, 3.0)
+                    b['dy'] = random.uniform(self.base_dy * 0.5, self.base_dy)
                     
                 # Build new targets for all characters
                 targets_by_char = self._build_targets(time_str, font, offset_x, offset_y)
@@ -69,11 +72,11 @@ class TetrisClock:
                         self.blocks.append({
                             'char_index': char_idx,
                             'x': tx,
-                            'y': ty - self.h - random.randint(0, 50),
+                            'y': ty - self.h - random.randint(0, self.h),
                             'tx': tx,
                             'ty': ty,
-                            'dy': random.uniform(2.0, 5.0),
-                            'color': random.choice(self.colors),
+                            'dy': random.uniform(self.base_dy, self.base_dy * 2.5),
+                            'color': random.choice(palette),
                             'state': 'in'
                         })
             else:
@@ -84,7 +87,7 @@ class TetrisClock:
                     for b in self.blocks:
                         if b.get('char_index', -1) in changed_indices and b['state'] in ['in', 'fixed']:
                             b['state'] = 'out'
-                            b['dy'] = random.uniform(1.0, 3.0)
+                            b['dy'] = random.uniform(self.base_dy * 0.5, self.base_dy)
                             
                     # Build new targets and add blocks ONLY for changed characters
                     targets_by_char = self._build_targets(time_str, font, offset_x, offset_y)
@@ -93,11 +96,11 @@ class TetrisClock:
                             self.blocks.append({
                                 'char_index': char_idx,
                                 'x': tx,
-                                'y': ty - self.h - random.randint(0, 50),
+                                'y': ty - self.h - random.randint(0, self.h),
                                 'tx': tx,
                                 'ty': ty,
-                                'dy': random.uniform(2.0, 5.0),
-                                'color': random.choice(self.colors),
+                                'dy': random.uniform(self.base_dy, self.base_dy * 2.5),
+                                'color': random.choice(palette),
                                 'state': 'in'
                             })
                             

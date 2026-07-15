@@ -32,13 +32,15 @@ def get_theme_colors(theme_id, color1_hex="#ffffff", color2_hex="#ffffff"):
     elif theme_id == 17: return (0, 255, 0), (0, 0, 0), False, None # Space InvaderClock (Negative Space)
     elif theme_id == 18: return (200, 255, 200), (0, 0, 0), False, None # Cyberpunk
     elif theme_id == 19: return (0, 0, 0), (0, 0, 0), False, None # Flip Clock (Negative Space)
-    elif theme_id == 21: return (0, 255, 0), (0, 0, 0), False, None # True Matrix
+    elif theme_id == 21: return (200, 255, 200), (0, 0, 0), False, None # True Matrix
     elif theme_id == 22: return (255, 255, 255), (0, 0, 0), False, None # Pong Clock
     elif theme_id == 23: return (255, 255, 255), (0, 0, 0), False, None # Tetris Clock
     elif theme_id == 24: return (255, 255, 0), (0, 0, 0), False, None # Pac-Man Clock
     elif theme_id == 25: return (255, 255, 255), (0, 0, 0), False, None # Word Clock
     elif theme_id == 26: return (0, 255, 255), (0, 0, 0), False, None # Binary Clock
     elif theme_id == 27: return (255, 255, 255), (0, 0, 0), False, None # Versus Clock
+    elif theme_id == 28: return (255, 255, 255), (0, 0, 0), False, None # Slot Machine Clock
+    elif theme_id == 29: return (15, 56, 15), (139, 172, 15), False, None # Tetris Gameboy Clock
     else: return (255, 255, 255), (0, 0, 0), False, None # Default
 
 def draw_styled_text(img, text, position, font, theme_id, c1_hex="#ffffff", c2_hex="#ffffff", scale=1):
@@ -68,6 +70,7 @@ def draw_styled_text(img, text, position, font, theme_id, c1_hex="#ffffff", c2_h
     # 1. Create a 1-bit crisp mask
     mask = Image.new("1", (mask_w, mask_h), 0)
     mask_draw = ImageDraw.Draw(mask)
+    mask_draw.fontmode = "1"  # Disable TTF anti-aliasing for crisp pixels
     # Shift by -left, -top so the ink starts exactly at (padding, padding)
     mask_draw.text((padding - left, padding - top), text, font=font, fill=1)
     
