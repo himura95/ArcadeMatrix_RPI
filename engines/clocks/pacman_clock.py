@@ -58,18 +58,23 @@ class PacManClock:
             self.new_time_str = time_str
         elif self.last_minute != now_min and not self.transitioning:
             self.transitioning = True
+            self.old_time_str = self.new_time_str
             self.new_time_str = time_str
             self.pac_x = -40
+        elif not self.transitioning:
+            self.new_time_str = time_str
 
         try:
             bbox = draw.textbbox((0, 0), time_str, font=font)
+            left, top = bbox[0], bbox[1]
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
         except:
             tw, th = 30, 10
+            left, top = 0, 0
 
-        tx = (self.w - tw) // 2
-        ty = (self.h - th) // 2 - 2
+        tx = (self.w - tw) // 2 - left
+        ty = (self.h - th) // 2 - top
 
         if not self.transitioning:
             # Normal static display with pulsing dots

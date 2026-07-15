@@ -51,13 +51,15 @@ class VersusClock:
         # Player names (P1, P2) or just draw the time really big in the center
         try:
             bbox = draw.textbbox((0, 0), time_str, font=font)
+            left, top = bbox[0], bbox[1]
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
         except:
             tw, th = 30, 10
+            left, top = 0, 0
             
-        tx = (self.w - tw) // 2
-        ty = (self.h - th) // 2 + 4
+        tx = (self.w - tw) // 2 - left
+        ty = (self.h - th) // 2 - top + 4
         
         # Draw background shadow for time
         draw.text((tx + 1, ty + 1), time_str, font=font, fill=(0, 0, 0))

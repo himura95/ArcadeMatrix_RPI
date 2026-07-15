@@ -153,8 +153,8 @@ class ClockEngine:
             text_width = (right - left) * scale_factor
             text_height = (bottom - top) * scale_factor
             
-            x = (self.config.matrix_width - text_width) // 2 + self.config.time_offset_x
-            y = (self.config.matrix_height - text_height) // 2 + self.config.time_offset_y - top
+            x = (self.config.matrix_width - text_width) // 2 - left + self.config.time_offset_x
+            y = (self.config.matrix_height - text_height) // 2 - top + self.config.time_offset_y
             
             if self.config.time_theme == 22:
                 # Pong Clock

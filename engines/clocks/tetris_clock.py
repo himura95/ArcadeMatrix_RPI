@@ -19,16 +19,19 @@ class TetrisClock:
         targets_by_char = []
         try:
             bbox = font.getbbox(time_str)
+            left, top = bbox[0], bbox[1]
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
         except:
             try:
                 tw, th = font.getsize(time_str)
+                left, top = 0, 0
             except:
                 tw, th = 30, 10
+                left, top = 0, 0
                 
-        start_x = (self.w - tw) // 2 + offset_x
-        y = (self.h - th) // 2 + offset_y
+        start_x = (self.w - tw) // 2 - left + offset_x
+        y = (self.h - th) // 2 - top + offset_y
         
         current_x = start_x
         for char in time_str:

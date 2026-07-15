@@ -32,13 +32,15 @@ class SlotMachineClock:
             
         try:
             bbox = draw.textbbox((0, 0), "00:00", font=font)
+            left, top = bbox[0], bbox[1]
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
         except:
             tw, th = 30, 10
+            left, top = 0, 0
             
-        tx = (self.w - tw) // 2
-        ty = (self.h - th) // 2
+        tx = (self.w - tw) // 2 - left
+        ty = (self.h - th) // 2 - top
         
         # Draw slot machine frame
         draw.rectangle([tx - 4, ty - 2, tx + tw + 4, ty + th + 2], outline=(200, 150, 0))
