@@ -421,9 +421,26 @@
                 <label>NTP Server</label>
                 <input type="text" id="setting-ntp-server" class="text-input" placeholder="pool.ntp.org" />
               </div>
-              <div class="form-group" style="flex: 1; min-width:120px;">
-                <label>Timezone</label>
-                <input type="text" id="setting-timezone" class="text-input" placeholder="CET-1CEST..." />
+              <div class="form-group" style="flex: 2; min-width:150px;">
+                <label>Timezone (City)</label>
+                <select id="setting-timezone" class="text-input">
+                  <option data-iana="Etc/UTC" value="UTC0">UTC / GMT</option>
+                  <option data-iana="Europe/London" value="GMT0BST,M3.5.0/1,M10.5.0">Europe/London</option>
+                  <option data-iana="Europe/Paris" value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Paris (CET)</option>
+                  <option data-iana="Europe/Berlin" value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Berlin (CET)</option>
+                  <option data-iana="Europe/Madrid" value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Madrid (CET)</option>
+                  <option data-iana="Europe/Rome" value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Rome (CET)</option>
+                  <option data-iana="Europe/Moscow" value="MSK-3">Europe/Moscow</option>
+                  <option data-iana="America/New_York" value="EST5EDT,M3.2.0,M11.1.0">America/New_York (EST)</option>
+                  <option data-iana="America/Chicago" value="CST6CDT,M3.2.0,M11.1.0">America/Chicago (CST)</option>
+                  <option data-iana="America/Denver" value="MST7MDT,M3.2.0,M11.1.0">America/Denver (MST)</option>
+                  <option data-iana="America/Los_Angeles" value="PST8PDT,M3.2.0,M11.1.0">America/Los_Angeles (PST)</option>
+                  <option data-iana="America/Sao_Paulo" value="<-03>3">America/Sao_Paulo</option>
+                  <option data-iana="Asia/Tokyo" value="JST-9">Asia/Tokyo</option>
+                  <option data-iana="Asia/Shanghai" value="CST-8">Asia/Shanghai</option>
+                  <option data-iana="Asia/Dubai" value="<+04>-4">Asia/Dubai</option>
+                  <option data-iana="Australia/Sydney" value="AEST-10AEDT,M10.1.0,M4.1.0/3">Australia/Sydney</option>
+                </select>
               </div>
               <div class="form-group" style="flex: 1; min-width:120px;">
                 <label>24h Format</label>
@@ -655,6 +672,20 @@
             const el = document.getElementById('setting-mqtt-enable');
             if (el) el.value = t.mqtt_enabled ? "1" : "0";
         }
+        if (t.timezone) {
+            const tzEl = document.getElementById('setting-timezone');
+            if (tzEl) {
+               tzEl.value = t.timezone;
+               // Fallback if the user has a custom POSIX string not in the list
+               if (tzEl.value !== t.timezone) {
+                   const opt = document.createElement('option');
+                   opt.value = t.timezone;
+                   opt.innerHTML = t.timezone;
+                   tzEl.appendChild(opt);
+                   tzEl.value = t.timezone;
+               }
+            }
+        }
         if (t.mqtt_broker) document.getElementById('setting-mqtt-broker').value = t.mqtt_broker;
         if (t.mqtt_port !== undefined) document.getElementById('setting-mqtt-port').value = t.mqtt_port;
         if (t.mqtt_user) document.getElementById('setting-mqtt-user').value = t.mqtt_user;
@@ -772,6 +803,8 @@
           try {
             const safeInt = (id, def) => { const el = document.getElementById(id); return el && !isNaN(parseInt(el.value, 10)) ? parseInt(el.value, 10) : def; };
             const safeStr = (id, def) => { const el = document.getElementById(id); return el ? el.value : def; };
+            const tzEl = document.getElementById('setting-timezone');
+            const iana = tzEl.options[tzEl.selectedIndex].getAttribute('data-iana');
             
             const payload = {
               clock_theme: safeInt('setting-clock-theme', 0),
@@ -780,7 +813,11 @@
               clock_offset_x: safeInt('setting-clock-offset-x', 0),
               clock_offset_y: safeInt('setting-clock-offset-y', 0),
               clock_color_1: safeStr('setting-clock-color-1', '#ffffff'),
-              clock_color_2: safeStr('setting-clock-color-2', '#ffffff')
+              clock_color_2: safeStr('setting-clock-color-2', '#ffffff'),
+              ntp_server: document.getElementById('setting-ntp-server').value,
+              timezone: tzEl.value,
+              timezone_iana: iana,
+              format_24h: (document.getElementById('setting-format24h').value === '1')
             };
             
             await fetch('/api/settings', {
