@@ -141,6 +141,12 @@ def api_settings():
         if 'clock_color_1' in data: config.clock_color_1 = str(data['clock_color_1'])
         if 'clock_color_2' in data: config.clock_color_2 = str(data['clock_color_2'])
         if 'format_24h' in data: config.time_24h = bool(data['format_24h'])
+        
+        if 'timezone_iana' in data:
+            tz_iana = data['timezone_iana']
+            if tz_iana:
+                import subprocess
+                subprocess.Popen(f"sudo timedatectl set-timezone {tz_iana}", shell=True)
 
         # DATE
         if 'date_offset_x' in data: config.date_offset_x = int(data['date_offset_x'])
