@@ -40,20 +40,30 @@ class FighterEngine:
         self.active = False
 
     def _load_fgt(self, filepath):
-        """Load a .fgt file and return (frames, delays) or (None, None)."""
-        if not os.path.exists(filepath): 
-            return None, None
+        """Load a .fgt or .fgt.gz file and return (frames, delays) or (None, None)."""
+        import gzip
+        
+        open_func = open
+        actual_path = filepath
+        
+        if not os.path.exists(filepath):
+            if os.path.exists(filepath + '.gz'):
+                actual_path = filepath + '.gz'
+                open_func = gzip.open
+            else:
+                return None, None
+        elif filepath.endswith('.gz'):
+            open_func = gzip.open
             
-        # No color swapping needed anymore since mugen_extractor has been fixed.
         FORCE_SWAP_RB = False
         try:
-            with open(filepath, 'rb') as f:
+            with open_func(actual_path, 'rb') as f:
                 magic = f.read(4)
-                if magic != b'FGT': 
-                    logging.warning(f"FGT bad magic in {filepath}: {magic}")
+                if magic != b'FGT\x01': 
+                    logging.warning(f"FGT bad magic in {actual_path}: {magic}")
                     return None, None
                 
-                logging.debug(f"Decoding FGT with NEW bytearray decoder: {filepath}")
+                logging.debug(f"Decoding FGT with NEW bytearray decoder: {actual_path}")
                 
                 w, h, count, trans = struct.unpack('<HHHH', f.read(8))
                 delays = list(struct.unpack(f'<{count}H', f.read(count * 2)))

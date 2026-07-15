@@ -243,8 +243,13 @@ def process_character(char_dir, out_dir):
     os.makedirs(char_out_dir, exist_ok=True)
     
     for anim_name, valid_frames in all_valid_frames.items():
-        out_file = os.path.join(char_out_dir, f"{anim_name}.fgt")
-        with open(out_file, 'wb') as f:
+        COMPRESS = globals().get('COMPRESS_FGT', False)
+        ext = ".fgt.gz" if COMPRESS else ".fgt"
+        out_file = os.path.join(char_out_dir, f"{anim_name}{ext}")
+        
+        import gzip
+        open_func = gzip.open if COMPRESS else open
+        with open_func(out_file, 'wb') as f:
             f.write(b'FGT')
             f.write(struct.pack('<B', 1))
             f.write(struct.pack('<H', canvas_w))
@@ -327,11 +332,14 @@ if __name__ == "__main__":
     parser.add_argument("--src", type=str, default="/Users/red1l/Downloads/Mercury Mugen Roster 1.0  with over 1000+ Chars/chars", help="Source directory containing Mugen characters")
     parser.add_argument("--mode", type=str, choices=['SCALED', 'FULLSIZE'], default='FULLSIZE', 
                         help="SCALED: Resize character to perfectly fit screen height (for standard ESP32). FULLSIZE: Extract at 1:1 original scale (for RPi or ESP32-S3 with PSRAM).")
+    parser.add_argument("--compress", action="store_true", help="Compress the output .fgt files using gzip (.fgt.gz). Ideal for RPi to save space.")
     args = parser.parse_args()
 
     # Set the global mode so process_character can see it
     global EXTRACT_MODE
     EXTRACT_MODE = args.mode
+    global COMPRESS_FGT
+    COMPRESS_FGT = args.compress
 
     src_dir = args.src
     out_dirs = [
