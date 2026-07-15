@@ -38,6 +38,7 @@ class DateEngine:
 
     def _draw_cyberpunk_bg(self, img):
         draw = ImageDraw.Draw(img)
+        draw.fontmode = '1'
         min_len = max(5, self.config.matrix_height // 6)
         max_len = max(10, self.config.matrix_height // 3 + 5)
         
@@ -66,6 +67,7 @@ class DateEngine:
         overlay = Image.new('RGBA', img.size, (0, 0, 0, 40))
         self.matrix_img = Image.alpha_composite(self.matrix_img, overlay)
         draw = ImageDraw.Draw(self.matrix_img)
+        draw.fontmode = '1'
         
         for i, y in enumerate(self.matrix_cols):
             if y >= 0 and y < self.config.matrix_height:
@@ -114,6 +116,7 @@ class DateEngine:
                 break
             img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0))
             draw = ImageDraw.Draw(img)
+            draw.fontmode = '1'
             
             if self.config.date_theme == 18:
                 self._draw_cyberpunk_bg(img)
@@ -149,6 +152,7 @@ class DateEngine:
                     for flip_frame in range(1, 9):
                         anim_img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0))
                         anim_draw = ImageDraw.Draw(anim_img)
+                        anim_draw.fontmode = '1'
                         
                         panel_w = max(4, tw // len(time_chars) + 1)
                         panel_h = max(8, th + 4)
@@ -193,6 +197,7 @@ class DateEngine:
                 # Final static frame
                 img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0))
                 draw = ImageDraw.Draw(img)
+                draw.fontmode = '1'
                 panel_w = max(4, tw // len(time_chars) + 1)
                 panel_h = max(8, th + 4)
                 spacing = 2

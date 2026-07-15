@@ -77,6 +77,7 @@ class WeatherEngine:
                 break
             img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0))
             draw = ImageDraw.Draw(img)
+            draw.fontmode = '1'
             
             temp_str = self.weather_data['temp']
             try:

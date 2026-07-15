@@ -33,6 +33,7 @@ class PongClock:
 
     def tick(self, img, time_str, font, color1, color2):
         draw = ImageDraw.Draw(img)
+        draw.fontmode = '1'
         
         # Parse time
         parts = time_str.split(':')

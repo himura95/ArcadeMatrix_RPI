@@ -34,6 +34,7 @@ class TetrisClock:
         for char in time_str:
             mask = Image.new('1', (self.w, self.h), color=0)
             draw = ImageDraw.Draw(mask)
+            draw.fontmode = '1'
             draw.text((current_x, y), char, font=font, fill=1)
             
             char_targets = []
@@ -56,6 +57,7 @@ class TetrisClock:
 
     def tick(self, img, time_str, font, offset_x, offset_y, is_gameboy=False):
         draw = ImageDraw.Draw(img)
+        draw.fontmode = '1'
         
         if self.last_time_str != time_str:
             palette = self.gb_colors if is_gameboy else self.colors

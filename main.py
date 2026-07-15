@@ -132,6 +132,7 @@ method=auto
         try:
             img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), "black")
             draw = ImageDraw.Draw(img)
+            draw.fontmode = '1'
             # Try to load a small font, fallback to default
             try:
                 font = ImageFont.truetype("fonts/PressStart2P.ttf", 6)

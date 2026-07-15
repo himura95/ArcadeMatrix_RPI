@@ -46,6 +46,7 @@ class PacManClock:
 
     def tick(self, img, time_str, font, color1, color2):
         draw = ImageDraw.Draw(img)
+        draw.fontmode = '1'
         self.anim_frame += 1
 
         parts = time_str.split(':')
