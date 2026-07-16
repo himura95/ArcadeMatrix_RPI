@@ -102,6 +102,7 @@ class FighterEngine:
                     
                     img = Image.frombytes('RGBA', (w, h), bytes(rgba))
                     frames.append(img)
+                    time.sleep(0.002)  # Throttle decompression to prevent memory bus starvation
                     
                 if not frames:
                     return None, None
