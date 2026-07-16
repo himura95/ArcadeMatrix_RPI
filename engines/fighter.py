@@ -178,6 +178,11 @@ class FighterEngine:
         if not a1 or not a2:
             self.loading = False
             return
+            
+        # Pre-flip Player 2 images once during load to save RAM bandwidth at 25 FPS
+        for state, anim in a2.items():
+            for i in range(len(anim['f'])):
+                anim['f'][i] = anim['f'][i].transpose(Image.FLIP_LEFT_RIGHT)
         
         # Align characters so their ACTUAL standing head touches the top of the screen (y=0)
         c1_ground_at_0 = c1[5] - c1[8]
@@ -258,9 +263,6 @@ class FighterEngine:
         
         frame_idx = min(p['frame'], len(anim['f']) - 1)
         img = anim['f'][frame_idx]
-        
-        if p['dir'] == -1:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
         
         # Clip paste coordinates to avoid issues
         px, py = int(p['x']), int(p['y'])
@@ -365,9 +367,6 @@ class FighterEngine:
             
             frame_idx = min(p['frame'], len(anim['f']) - 1)
             img = anim['f'][frame_idx]
-            
-            if p['dir'] == -1:
-                img = img.transpose(Image.FLIP_LEFT_RIGHT)
             
             px, py = int(p['x']), int(p['y']) + offset_y
             bg_offset.paste(img, (px, py), img)
