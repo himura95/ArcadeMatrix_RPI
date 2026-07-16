@@ -72,8 +72,6 @@ class RotationManager:
                 elif engine_name == 'message':
                     engine.run()
                     
-                self.fighter_engine.reset()
-                
                 # Small pause between engines for smooth transition
                 if not is_single:
                     self.mw.clear()

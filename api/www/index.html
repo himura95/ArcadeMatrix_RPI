@@ -342,6 +342,10 @@
                   <input type="checkbox" id="setting-sprite-enable" style="width:20px;height:20px;" checked />
                   <label for="setting-sprite-enable" style="cursor:pointer;" data-i18n="label_bg_sprites">Enable VS Fighting Background</label>
                 </div>
+                <div style="margin-top: 0.5rem;">
+                  <label style="font-size: 0.85em; opacity: 0.8;">Delay between fights: <span id="fighter-interval-val">10</span>s</label>
+                  <input type="range" id="setting-fighter-interval" min="0" max="60" value="10" style="width: 100%;" oninput="document.getElementById('fighter-interval-val').innerText = this.value" />
+                </div>
               </div>
             </div>
             <button id="btn-save-idle" class="btn primary" style="margin-top:1rem; width: 100%;" data-i18n="btn_save_rotation">Save Rotation Config</button>
@@ -659,6 +663,14 @@
             const el = document.getElementById('setting-sprite-enable');
             if(el) el.checked = (t.sprite_count > 0);
         }
+        if (t.fighter_interval_sec !== undefined) {
+            const el = document.getElementById('setting-fighter-interval');
+            const valEl = document.getElementById('fighter-interval-val');
+            if(el) {
+                el.value = t.fighter_interval_sec;
+                if(valEl) valEl.innerText = t.fighter_interval_sec;
+            }
+        }
         if (t.weather_api_key) document.getElementById('setting-weather-api-key').value = t.weather_api_key;
         if (t.weather_city) document.getElementById('setting-weather-city').value = t.weather_city;
         if (t.weather_offset_x !== undefined) document.getElementById('setting-weather-offset-x').value = t.weather_offset_x;
@@ -772,6 +784,7 @@
           const weather_dur = parseInt(document.getElementById('setting-weather-dur').value, 10);
           const gifs_count = parseInt(document.getElementById('setting-gifs-count').value, 10);
           const sprite_count = document.getElementById('setting-sprite-enable').checked ? 1 : 0;
+          const fighter_interval_sec = parseInt(document.getElementById('setting-fighter-interval').value) || 0;
           
           try {
             await fetch('/api/settings', {
@@ -783,7 +796,8 @@
                 date_duration_sec: date_dur,
                 weather_duration_sec: weather_dur,
                 gifs_count: gifs_count,
-                sprite_count: sprite_count
+                sprite_count: sprite_count,
+                fighter_interval_sec: fighter_interval_sec
               })
             });
             const oldText = newSaveRotBtn.innerText;

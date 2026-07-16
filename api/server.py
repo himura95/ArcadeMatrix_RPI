@@ -80,6 +80,7 @@ def api_settings():
             'weather_duration_sec': config.idle_weather_dur,
             'gifs_count': config.idle_gifs_count,
             'sprite_count': config.idle_sprite_count,
+            'fighter_interval_sec': getattr(config, 'idle_fighter_interval', 10),
             'weather_api_key': config.weather_api,
             'weather_city': config.weather_city,
             'wifi_ssid': config.wifi_ssid,
@@ -185,6 +186,7 @@ def api_settings():
         if 'weather_duration_sec' in data: config.idle_weather_dur = int(data['weather_duration_sec'])
         if 'gifs_count' in data: config.idle_gifs_count = int(data['gifs_count'])
         if 'sprite_count' in data: config.idle_sprite_count = int(data['sprite_count'])
+        if 'fighter_interval_sec' in data: config.idle_fighter_interval = int(data['fighter_interval_sec'])
         
         config.save()
         config.reload_flag = True

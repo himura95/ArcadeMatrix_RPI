@@ -179,6 +179,12 @@ def process_character(char_dir, out_dir):
                 img_info = sff.images[(f['grp'], f['img'])]
                 try:
                     img_obj = Image.open(io.BytesIO(img_info['data']))
+                    
+                    # Detect broken palettes (solid silhouettes with <= 2 colors including transparency)
+                    colors = img_obj.convert('RGB').getcolors(256)
+                    if colors is not None and len(colors) <= 2:
+                        continue
+                        
                 except Exception as e:
                     continue
                 

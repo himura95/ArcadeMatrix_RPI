@@ -23,6 +23,7 @@ class FighterEngine:
         self.p2 = self._init_player()
         self.last_move = 0
         self.fight_end = 0
+        self.next_fight_time = 0
         logging.info(f"FighterEngine: matrix={self.config.matrix_width}x{self.config.matrix_height}, primary={self.primary_dir}")
 
     def _init_player(self):
@@ -38,6 +39,7 @@ class FighterEngine:
     def reset(self):
         self.fights_done = 0
         self.active = False
+        self.next_fight_time = 0
 
     def _load_fgt(self, filepath):
         """Load a .fgt or .fgt.gz file and return (frames, delays) or (None, None)."""
@@ -66,43 +68,42 @@ class FighterEngine:
                 logging.debug(f"Decoding FGT with NEW bytearray decoder: {actual_path}")
                 
                 w, h, count, trans = struct.unpack('<HHHH', f.read(8))
-                delays = list(struct.unpack(f'<{count}H', f.read(count * 2)))
+                
+                trans_bytes = struct.pack('<H', trans)
+                # BGR565 format parsing
+                import PIL.ImageChops
+                trans_pixel = Image.frombytes('RGB', (1, 1), trans_bytes, 'raw', 'BGR;16').getpixel((0,0))
+                
                 frames = []
+                delays = []
+                
+                # Precompute transparent image and LUT for ultra-fast alpha masking
+                trans_img = Image.new('RGB', (w, h), trans_pixel)
+                lut = [0] + [255] * 255
                 
                 for _ in range(count):
                     frame_bytes = w * h * 2
                     data = f.read(frame_bytes)
-                    if not data or len(data) < frame_bytes:
+                    if len(data) < frame_bytes:
                         break
-                        
-                    # Decode RGB565 LE -> RGBA using bytearray (much faster and memory safe)
-                    rgba = bytearray(w * h * 4)
-                    idx = 0
-                    for pi in range(0, frame_bytes, 2):
-                        c = data[pi] | (data[pi+1] << 8)
-                        if c == trans:
-                            idx += 4
-                            continue
-                            
-                        r = (c >> 11) << 3
-                        g = ((c >> 5) & 0x3F) << 2
-                        b = (c & 0x1F) << 3
-                        
-                        if FORCE_SWAP_RB:
-                            rgba[idx] = b
-                            rgba[idx+1] = g
-                            rgba[idx+2] = r
-                        else:
-                            rgba[idx] = r
-                            rgba[idx+1] = g
-                            rgba[idx+2] = b
-                            
-                        rgba[idx+3] = 255
-                        idx += 4
                     
-                    img = Image.frombytes('RGBA', (w, h), bytes(rgba))
+                    delay = struct.unpack('<H', f.read(2))[0]
+                    delays.append(delay)
+                    
+                    # Ultra-fast decoding using PIL C-extensions
+                    img = Image.frombytes('RGB', (w, h), data, 'raw', 'BGR;16')
+                    
+                    # Create alpha mask where color matches transparent color
+                    diff = PIL.ImageChops.difference(img, trans_img)
+                    mask = diff.convert('L').point(lut, 'L')
+                    
+                    if FORCE_SWAP_RB:
+                        b, g, r = img.split()
+                        img = Image.merge('RGB', (r, g, b))
+                        
+                    img.putalpha(mask)
                     frames.append(img)
-                    time.sleep(0.002)  # Throttle decompression to prevent memory bus starvation
+                    time.sleep(0.005)  # Yield CPU to allow matrix DMA to refresh and prevent flickering
                     
                 if not frames:
                     return None, None
@@ -222,12 +223,13 @@ class FighterEngine:
         self.fight_end = 0
         self.loading = False
 
-    def _start_fight(self):
+    def _start_fight(self, now, bg_img):
         import threading
-        if getattr(self, 'loading', False):
-            return
-        self.loading = True
-        threading.Thread(target=self._start_fight_thread, daemon=True).start()
+        if not self.active:
+            if not getattr(self, 'loading', False) and now >= self.next_fight_time:
+                self.loading = True
+                threading.Thread(target=self._start_fight_thread, daemon=True).start()
+        return bg_img
 
     def _update_anim(self, p, now):
         state = p['state']
@@ -274,10 +276,7 @@ class FighterEngine:
         
         now = time.time() * 1000
         if not self.active:
-            if not getattr(self, 'loading', False):
-                if self.fight_end == 0 or now - self.fight_end > 2000:
-                    self._start_fight()
-            return bg_img
+            return self._start_fight(now, bg_img)
             
         self._update_anim(self.p1, now)
         self._update_anim(self.p2, now)
@@ -343,6 +342,7 @@ class FighterEngine:
         if self.fight_end > 0 and now - self.fight_end > 2000:
             self.active = False
             self.fights_done += 1
+            self.next_fight_time = now + (getattr(self.config, 'idle_fighter_interval', 10) * 1000)
         
         # Draw (loser behind, winner in front)
         import random

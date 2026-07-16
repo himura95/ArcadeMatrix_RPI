@@ -56,6 +56,7 @@ class Config:
         self.idle_weather_dur = 10
         self.idle_gifs_count = 5
         self.idle_sprite_count = 3
+        self.idle_fighter_interval = 10
         self.selected_gifs = []
         self.selected_sprites = []
 
@@ -155,6 +156,7 @@ class Config:
         self.idle_weather_dur = get_int('IDLE', 'WEATHER_DURATION_SEC', self.idle_weather_dur)
         self.idle_gifs_count = get_int('IDLE', 'GIFS_COUNT', self.idle_gifs_count)
         self.idle_sprite_count = get_int('IDLE', 'SPRITE_COUNT', self.idle_sprite_count)
+        self.idle_fighter_interval = get_int('IDLE', 'FIGHTER_INTERVAL_SEC', self.idle_fighter_interval)
         sg = get_str('IDLE', 'SELECTED_GIFS', "")
         if sg: self.selected_gifs = [x.strip() for x in sg.split(',') if x.strip()]
         sp = get_str('IDLE', 'SELECTED_SPRITES', "")
@@ -225,6 +227,7 @@ class Config:
         self.parser.set('IDLE', 'WEATHER_DURATION_SEC', str(self.idle_weather_dur))
         self.parser.set('IDLE', 'GIFS_COUNT', str(self.idle_gifs_count))
         self.parser.set('IDLE', 'SPRITE_COUNT', str(self.idle_sprite_count))
+        self.parser.set('IDLE', 'FIGHTER_INTERVAL_SEC', str(self.idle_fighter_interval))
         self.parser.set('IDLE', 'SELECTED_GIFS', ",".join(self.selected_gifs))
         self.parser.set('IDLE', 'SELECTED_SPRITES', ",".join(self.selected_sprites))
 
