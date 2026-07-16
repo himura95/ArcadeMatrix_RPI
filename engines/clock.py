@@ -177,7 +177,7 @@ class ClockEngine:
                 img = self.versus_clock.tick(img, time_str, font, self.config.clock_color_1, self.config.clock_color_2)
             elif self.config.time_theme == 28:
                 # Slot Machine Clock
-                img = self.slot_clock.tick(img, time_str, font, self.config.clock_color_1, self.config.clock_color_2)
+                img = self.slot_clock.tick(img, time_str, font, self.config.clock_color_1, self.config.clock_color_2, self.config.time_offset_x, self.config.time_offset_y)
             elif self.config.time_theme == 19:
                 # ESP32 Style Flip Clock
                 if not hasattr(self, 'prev_digits'):

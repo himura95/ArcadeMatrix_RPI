@@ -13,7 +13,7 @@ class SlotMachineClock:
         self.current_time = "00:00"
         self.y_offset = 0.0
 
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, offset_x=0, offset_y=0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         self.anim_frame += 1
@@ -39,8 +39,8 @@ class SlotMachineClock:
             tw, th = 30, 10
             left, top = 0, 0
             
-        tx = (self.w - tw) // 2 - left
-        ty = (self.h - th) // 2 - top
+        tx = (self.w - tw) // 2 - left + offset_x
+        ty = (self.h - th) // 2 - top + offset_y
         
         # Draw slot machine frame
         draw.rectangle([tx - 4, ty - 2, tx + tw + 4, ty + th + 2], outline=(200, 150, 0))
