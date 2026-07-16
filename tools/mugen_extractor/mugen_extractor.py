@@ -3,6 +3,7 @@ import glob
 import struct
 import io
 import time
+import logging
 import json
 from PIL import Image
 
