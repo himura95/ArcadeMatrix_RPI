@@ -109,6 +109,23 @@ if [ -f "/boot/firmware/config.txt" ]; then
     CONFIG_TXT="/boot/firmware/config.txt"
 fi
 
+# Disable HDMI audio loaded by vc4 driver which causes PWM conflicts
+if grep -q "dtoverlay=vc4-kms-v3d$" "$CONFIG_TXT"; then
+    sudo sed -i 's/dtoverlay=vc4-kms-v3d$/dtoverlay=vc4-kms-v3d,noaudio/g' "$CONFIG_TXT"
+    echo "Disabled vc4 HDMI audio in $CONFIG_TXT"
+fi
+
+# Isolate CPU core 3 for perfect LED matrix timing
+CMDLINE_TXT="/boot/cmdline.txt"
+if [ -f "/boot/firmware/cmdline.txt" ]; then
+    CMDLINE_TXT="/boot/firmware/cmdline.txt"
+fi
+
+if ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
+    sudo sed -i '1 s/$/ isolcpus=3/' "$CMDLINE_TXT"
+    echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
+fi
+
 if grep -q "dtparam=audio=on" "$CONFIG_TXT"; then
     sudo sed -i 's/dtparam=audio=on/dtparam=audio=off/g' "$CONFIG_TXT"
     echo "Disabled audio in $CONFIG_TXT"

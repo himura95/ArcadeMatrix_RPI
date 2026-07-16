@@ -96,6 +96,17 @@ if grep -q "dtoverlay=vc4-kms-v3d$" "$CONFIG_TXT"; then
     echo "Disabled vc4 HDMI audio in $CONFIG_TXT"
 fi
 
+# Isolate CPU core 3 for perfect LED matrix timing
+CMDLINE_TXT="/boot/cmdline.txt"
+if [ -f "/boot/firmware/cmdline.txt" ]; then
+    CMDLINE_TXT="/boot/firmware/cmdline.txt"
+fi
+
+if ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
+    sudo sed -i '1 s/$/ isolcpus=3/' "$CMDLINE_TXT"
+    echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
+fi
+
 # 7. Setup Systemd Service
 echo "Setting up systemd service for auto-start..."
 SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
