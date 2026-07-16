@@ -153,7 +153,8 @@ class FighterEngine:
         self.shake_frames = 0
         
         fighters = self._get_fighters_list()
-        if len(fighters) < 2: 
+        if len(fighters) < 2:
+            self.loading = False
             return
         
         c1 = random.choice(fighters)
@@ -164,7 +165,9 @@ class FighterEngine:
         if not valid_opponents:
             # Fallback if no matching size
             valid_opponents = [f for f in fighters if f != c1]
-            if not valid_opponents: return
+            if not valid_opponents:
+                self.loading = False
+                return
             
         c2 = random.choice(valid_opponents)
         
@@ -172,7 +175,8 @@ class FighterEngine:
         
         a1 = self._load_fighter(c1[1], c1[0])
         a2 = self._load_fighter(c2[1], c2[0])
-        if not a1 or not a2: 
+        if not a1 or not a2:
+            self.loading = False
             return
         
         # Align characters so their ACTUAL standing head touches the top of the screen (y=0)
