@@ -126,6 +126,9 @@ if ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
     echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
 fi
 
+# Disable triggerhappy service which is known to cause PWM flickering
+sudo systemctl disable triggerhappy 2>/dev/null || true
+
 if grep -q "dtparam=audio=on" "$CONFIG_TXT"; then
     sudo sed -i 's/dtparam=audio=on/dtparam=audio=off/g' "$CONFIG_TXT"
     echo "Disabled audio in $CONFIG_TXT"

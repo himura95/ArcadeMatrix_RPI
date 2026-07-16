@@ -107,6 +107,9 @@ if ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
     echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
 fi
 
+# Disable triggerhappy service which is known to cause PWM flickering
+sudo systemctl disable triggerhappy 2>/dev/null || true
+
 # 7. Setup Systemd Service
 echo "Setting up systemd service for auto-start..."
 SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
