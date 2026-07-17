@@ -47,7 +47,7 @@ fi
 if [ "$ACTION" = "rungame" ] || [ "$ACTION" = "gameStart" ] || [ "$ACTION" = "GamelistBrowsing" ] || [ "$ACTION" = "gameSelected" ]; then
     # Essayer de lire le statefile de Recalbox
     if [ -f "$STATEFILE" ]; then
-        ROM_PATH=$(grep -i '^rom=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\r')
+        ROM_PATH=$(grep -iE '^(rom|game)=' "$STATEFILE" | head -n1 | cut -d'=' -f2- | tr -d '\r')
         SYSTEM_NAME=$(grep -i '^system=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\r')
     else
         ROM_PATH=$2 # Fallback Batocera

@@ -71,7 +71,7 @@ if [ "$ACTION" = "rungame" ] || [ "$ACTION" = "gameStart" ] || [ "$ACTION" = "Ga
     
     # Read statefile for Recalbox
     if [ -n "$STATEFILE" ] && [ -f "$STATEFILE" ]; then
-        ROM_PATH=$(grep -i '^rom=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\\r')
+        ROM_PATH=$(grep -iE '^(rom|game)=' "$STATEFILE" | head -n1 | cut -d'=' -f2- | tr -d '\\r')
         SYSTEM_NAME=$(grep -i '^system=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\\r')
     fi
     
