@@ -1,6 +1,6 @@
 import time
 import logging
-from PIL import Image
+from PIL import Image, ImageOps
 
 class MarqueeEngine:
     def __init__(self, matrix_wrapper, config):
@@ -21,9 +21,9 @@ class MarqueeEngine:
             logging.error(f"MarqueeEngine: Cannot open image {image_path}: {e}")
             return
 
-        # Resize image to fit matrix
+        # Resize image to fit matrix while keeping aspect ratio (padding with black)
         if image.size != (self.config.matrix_width, self.config.matrix_height):
-            image = image.resize((self.config.matrix_width, self.config.matrix_height), Image.Resampling.LANCZOS)
+            image = ImageOps.pad(image, (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0), method=Image.Resampling.LANCZOS)
 
         canvas = self.mw.get_canvas()
         if not canvas:
