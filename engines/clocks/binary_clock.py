@@ -5,7 +5,7 @@ class BinaryClock:
         self.w = width
         self.h = height
         
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         

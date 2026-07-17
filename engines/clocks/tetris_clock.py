@@ -15,7 +15,7 @@ class TetrisClock:
         self.block_size = max(2, self.h // 16)
         self.base_dy = self.h / 15.0
         
-    def _build_targets(self, time_str, font, offset_x, offset_y):
+    def _build_targets(self, time_str, font, offset_x, offset_y, scale_factor=1.0):
         targets_by_char = []
         try:
             bbox = font.getbbox(time_str)
@@ -30,23 +30,15 @@ class TetrisClock:
                 tw, th = 30, 10
                 left, top = 0, 0
                 
-        start_x = (self.w - tw) // 2 - left + offset_x
-        y = (self.h - th) // 2 - top + offset_y
+        scaled_tw = tw * scale_factor
+        scaled_th = th * scale_factor
+        
+        start_x = (self.w - scaled_tw) // 2 - (left * scale_factor) + offset_x
+        y = (self.h - scaled_th) // 2 - (top * scale_factor) + offset_y
         
         current_x = start_x
         for char in time_str:
-            mask = Image.new('1', (self.w, self.h), color=0)
-            draw = ImageDraw.Draw(mask)
-            draw.fontmode = '1'
-            draw.text((current_x, y), char, font=font, fill=1)
-            
-            char_targets = []
-            for py in range(0, self.h, self.block_size):
-                for px in range(0, self.w, self.block_size):
-                    if mask.getpixel((px, py)):
-                        char_targets.append((px, py))
-            targets_by_char.append(char_targets)
-            
+            # Create a 1-bit mask at scale 1
             try:
                 cw = font.getlength(char)
             except:
@@ -54,11 +46,38 @@ class TetrisClock:
                     cw, _ = font.getsize(char)
                 except:
                     cw = 6
-            current_x += int(cw)
+                    
+            mask_w = max(1, int(cw)) + 2
+            mask_h = max(1, th) + 2
+            
+            mask = Image.new('1', (mask_w, mask_h), color=0)
+            draw = ImageDraw.Draw(mask)
+            draw.fontmode = '1'
+            draw.text((1 - left, 1 - top), char, font=font, fill=1)
+            
+            # Scale it blockily
+            if scale_factor > 1:
+                try:
+                    resample = Image.Resampling.NEAREST
+                except AttributeError:
+                    resample = Image.NEAREST
+                mask = mask.resize((int(mask_w * scale_factor), int(mask_h * scale_factor)), resample)
+            
+            char_targets = []
+            for py in range(0, mask.size[1], int(self.block_size)):
+                for px in range(0, mask.size[0], int(self.block_size)):
+                    if mask.getpixel((px, py)):
+                        # Map back to global coordinates
+                        tx = current_x + px - (1 * scale_factor)
+                        ty = y + py - (1 * scale_factor)
+                        char_targets.append((tx, ty))
+            targets_by_char.append(char_targets)
+            
+            current_x += int(cw * scale_factor)
             
         return targets_by_char
 
-    def tick(self, img, time_str, font, offset_x, offset_y, is_gameboy=False):
+    def tick(self, img, time_str, font, offset_x, offset_y, is_gameboy=False, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         
@@ -71,7 +90,7 @@ class TetrisClock:
                     b['dy'] = random.uniform(self.base_dy * 0.5, self.base_dy)
                     
                 # Build new targets for all characters
-                targets_by_char = self._build_targets(time_str, font, offset_x, offset_y)
+                targets_by_char = self._build_targets(time_str, font, offset_x, offset_y, scale_factor)
                 for char_idx, targets in enumerate(targets_by_char):
                     for tx, ty in targets:
                         self.blocks.append({
@@ -95,7 +114,7 @@ class TetrisClock:
                             b['dy'] = random.uniform(self.base_dy * 0.5, self.base_dy)
                             
                     # Build new targets and add blocks ONLY for changed characters
-                    targets_by_char = self._build_targets(time_str, font, offset_x, offset_y)
+                    targets_by_char = self._build_targets(time_str, font, offset_x, offset_y, scale_factor)
                     for char_idx in changed_indices:
                         for tx, ty in targets_by_char[char_idx]:
                             self.blocks.append({

@@ -114,29 +114,49 @@ Si vous préférez configurer la matrice manuellement plutôt que via l'interfac
 C'est particulièrement utile pour renseigner vos identifiants Wi-Fi avant le premier démarrage.
 
 ### 🌐 [WIFI]
-* `SSID` : Le nom de votre réseau Wi-Fi.
-* `PASS` : Le mot de passe de votre réseau.
-* `CONFIGURED` : Mettez sur `false` pour forcer le Raspberry Pi à se connecter au prochain démarrage. Une fois connecté, le système remettra automatiquement cette valeur sur `true`.
+| Paramètre | Défaut | Description |
+|---|---|---|
+| `SSID` | `YourNetworkName` | Le nom de votre réseau Wi-Fi. |
+| `PASS` | `YourNetworkPassword` | Le mot de passe de votre réseau. |
+| `CONFIGURED` | `false` | Mettez sur `false` pour forcer le Raspberry Pi à se connecter au prochain démarrage. Remis automatiquement à `true` en cas de succès. |
 
 ### 🎛️ [MATRIX]
-* `ROWS` & `COLS` : Les dimensions d'un panneau LED (ex: `ROWS=32`, `COLS=64`).
-* `HARDWARE_MAPPING` : Le type de câblage. Utilisez `adafruit-hat` ou `adafruit-hat-pwm` pour le HAT Adafruit. Utilisez `regular-pi1` ou `regular` si vous câblez directement aux ports GPIO.
-* `CHAIN` & `PARALLEL` : `CHAIN` permet de définir combien d'écrans sont chaînés horizontalement. `PARALLEL` est pour le branchement sur plusieurs ports HUB75 verticaux.
-* `SLOWDOWN` : Augmentez cette valeur (de 1 à 4) si votre matrice affiche des glitchs visuels ou clignote (surtout sur Raspberry Pi 3 et 4).
+| Paramètre | Défaut | Description |
+|---|---|---|
+| `ROWS` / `COLS` | `32` / `64` | Les dimensions en pixels d'un seul panneau LED. |
+| `HARDWARE_MAPPING` | `adafruit-hat` | Type de câblage utilisé. (`adafruit-hat`, `adafruit-hat-pwm`, `regular-pi1`, `regular`). |
+| `CHAIN` / `PARALLEL` | `1` / `1` | `CHAIN` pour chainer horizontalement. `PARALLEL` pour empiler verticalement sur plusieurs ports HUB75. |
+| `SLOWDOWN` | `2` | Ralentissement matériel (1 à 4). Augmentez si votre matrice clignote ou glitch (surtout Pi 3/4). |
+| `BRIGHTNESS` | `100` | Luminosité globale de la matrice (1 à 100). |
+| `RGB_SEQUENCE` | `RGB` | Ordre des couleurs. Modifiez en `RBG` ou `BGR` si vos couleurs sont inversées. |
 
 ### ⏰ [TIME] & [DATE]
-* `FORMAT_24H` : Mettez sur `true` pour le format 24h, ou `false` pour le format AM/PM (12h).
-* `CLOCK_FONT` : Nom du fichier `.ttf` ou `.bdf` situé dans le dossier `/fonts/`.
-* `THEME` : L'identifiant numérique de l'horloge ou du thème de date (tel qu'affiché sur l'UI Web).
+| Paramètre | Défaut | Description |
+|---|---|---|
+| `FORMAT_24H` | `true` | `true` pour le format 24h, `false` pour le format AM/PM (12h). |
+| `CLOCK_FONT` | `DotGothic16.ttf`| Nom du fichier `.ttf` ou `.bdf` situé dans `/fonts/`. |
+| `CLOCK_SIZE` | `16` | Taille de la police (facteur d'échelle) pour l'horloge. |
+| `THEME` | `0` | L'identifiant numérique du thème d'horloge (ex: 19 pour Flip, 21 pour True Matrix). |
+| `CLOCK_COLOR_1` | `#ffffff` | Couleur hexadécimale primaire. Utilisée pour les dégradés si le thème est Custom (20). |
+| `CLOCK_COLOR_2` | `#ffffff` | Couleur hexadécimale secondaire. |
+
+*(La section `[DATE]` contient des paramètres identiques pour configurer l'affichage de la date).*
 
 ### 🔄 [IDLE]
-* `ROTATION` : Dicte la règle de rotation (`clock`, `gifs`, `sprites`, ou `all`).
-* `CLOCK_DURATION_SEC` : Combien de temps l'horloge reste à l'écran.
-* `SELECTED_GIFS` / `SELECTED_SPRITES` : Une liste séparée par des virgules de médias que vous souhaitez boucler. Laissez vide pour tout jouer.
+| Paramètre | Défaut | Description |
+|---|---|---|
+| `ROTATION` | `all` | Dicte la règle de rotation (`clock`, `gifs`, `sprites`, ou `all`). |
+| `CLOCK_DURATION_SEC`| `10` | Temps d'affichage de l'horloge/date pendant la boucle. |
+| `GIF_DURATION_SEC` | `10` | Temps d'affichage d'un seul GIF avant de passer au suivant. |
+| `SELECTED_GIFS` | *(vide)* | Liste séparée par des virgules pour boucler certains médias. Laissez vide pour tout jouer. |
+| `SELECTED_SPRITES` | *(vide)* | Liste séparée par des virgules pour boucler certains sprites. Laissez vide pour tout jouer. |
 
 ### 🌙 [STANDBY]
-* `NIGHT_MODE_ENABLED` : Si `true`, la matrice s'éteindra et se rallumera automatiquement aux heures spécifiées.
-* `TURN_OFF_AT` & `WAKE_UP_AT` : Heures formatées en HH:MM.
+| Paramètre | Défaut | Description |
+|---|---|---|
+| `NIGHT_MODE_ENABLED`| `false` | Si `true`, la matrice s'éteindra et se rallumera automatiquement. |
+| `TURN_OFF_AT` | `23:00` | Heure formatée en HH:MM pour la mise en veille. |
+| `WAKE_UP_AT` | `07:00` | Heure formatée en HH:MM pour le réveil. |
 
 ## 📜 Licence
 Ce projet est open-source. Profitez de votre horloge d'arcade rétro ultime !

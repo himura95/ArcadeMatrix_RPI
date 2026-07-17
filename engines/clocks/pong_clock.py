@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 import random
 import math
+from core.theme import draw_styled_text
 
 class PongClock:
     def __init__(self, width, height):
@@ -31,7 +32,7 @@ class PongClock:
             self.ball_x = self.w - self.pad_w - 3
             self.ball_dx = -max(1.5, self.w / 40.0)
 
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         
@@ -62,8 +63,10 @@ class PongClock:
         except:
             w_l = 15
             
-        draw.text(((self.w//2) - w_l - 8, 4), score_left, font=font, fill=color1)
-        draw.text(((self.w//2) + 8, 4), score_right, font=font, fill=color2)
+        w_l *= scale_factor
+            
+        draw_styled_text(img, score_left, ((self.w//2) - w_l - 8, 4), font, 19, color1, color1, scale=scale_factor)
+        draw_styled_text(img, score_right, ((self.w//2) + 8, 4), font, 19, color2, color2, scale=scale_factor)
         
         # Physics
         self.ball_x += self.ball_dx

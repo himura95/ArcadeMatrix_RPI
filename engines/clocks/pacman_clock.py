@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import math
 import time
+from core.theme import draw_styled_text
 
 class PacManClock:
     def __init__(self, width, height):
@@ -44,7 +45,7 @@ class PacManClock:
         draw.point((x - radius/2 + 1, y), fill=(0, 0, 255))
         draw.point((x + radius/2 + 1, y), fill=(0, 0, 255))
 
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         self.anim_frame += 1
@@ -73,12 +74,17 @@ class PacManClock:
             tw, th = 30, 10
             left, top = 0, 0
 
+        tw *= scale_factor
+        th *= scale_factor
+        left *= scale_factor
+        top *= scale_factor
+
         tx = (self.w - tw) // 2 - left
         ty = (self.h - th) // 2 - top
 
         if not self.transitioning:
             # Normal static display with pulsing dots
-            draw.text((tx, ty), self.new_time_str, font=font, fill=color1)
+            draw_styled_text(img, self.new_time_str, (tx, ty), font, 19, color1, color1, scale=scale_factor)
             # Draw some pellets randomly around
             for i in range(5):
                 px = (math.sin(self.anim_frame * 0.1 + i) * self.w/2) + self.w/2
@@ -95,12 +101,12 @@ class PacManClock:
             if self.pac_x < self.w + 60:
                 # Clip area for old time (only visible right of pacman)
                 old_clip = (self.pac_x, 0, self.w, self.h)
-                draw.text((tx, ty), self.old_time_str, font=font, fill=(100, 100, 100))
+                draw_styled_text(img, self.old_time_str, (tx, ty), font, 19, (100, 100, 100), (100, 100, 100), scale=scale_factor)
                 # Cover the eaten part
                 draw.rectangle([0, 0, self.pac_x, self.h], fill=(0,0,0))
                 
                 # Draw new time trailing far behind ghosts
-                draw.text((tx, ty), self.new_time_str, font=font, fill=color1)
+                draw_styled_text(img, self.new_time_str, (tx, ty), font, 19, color1, color1, scale=scale_factor)
                 # Cover new time ahead of the reveal wave
                 reveal_x = self.pac_x - 50
                 if reveal_x < self.w:

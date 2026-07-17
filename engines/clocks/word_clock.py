@@ -1,5 +1,6 @@
 from PIL import ImageDraw
 from datetime import datetime
+from core.theme import draw_styled_text
 
 class WordClock:
     def __init__(self, width, height):
@@ -12,7 +13,7 @@ class WordClock:
             return nums[n]
         return str(n)
 
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         
@@ -73,8 +74,9 @@ class WordClock:
                 lh = bbox[3] - bbox[1]
             except:
                 lh = 8
+            lh *= scale_factor
             line_heights.append(lh)
-            total_h += lh + 2
+            total_h += lh + (2 * scale_factor)
             
         y = (self.h - total_h) // 2
         for i, line in enumerate(lines):
@@ -84,9 +86,11 @@ class WordClock:
             except:
                 lw = len(line) * 5
                 
+            lw *= scale_factor
+                
             x = (self.w - lw) // 2
             c = color1 if i % 2 == 0 else color2
-            draw.text((x, y), line, font=font, fill=c)
-            y += line_heights[i] + 2
+            draw_styled_text(img, line, (x, y), font, 19, c, c, scale=scale_factor)
+            y += line_heights[i] + (2 * scale_factor)
             
         return img

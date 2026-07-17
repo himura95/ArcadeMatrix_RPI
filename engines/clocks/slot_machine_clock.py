@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import math
+from core.theme import draw_styled_text
 
 class SlotMachineClock:
     def __init__(self, width, height):
@@ -13,7 +14,7 @@ class SlotMachineClock:
         self.current_time = "00:00"
         self.y_offset = 0.0
 
-    def tick(self, img, time_str, font, color1, color2, offset_x=0, offset_y=0):
+    def tick(self, img, time_str, font, color1, color2, offset_x=0, offset_y=0, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         self.anim_frame += 1
@@ -39,6 +40,11 @@ class SlotMachineClock:
             tw, th = 30, 10
             left, top = 0, 0
             
+        tw *= scale_factor
+        th *= scale_factor
+        left *= scale_factor
+        top *= scale_factor
+            
         tx = (self.w - tw) // 2 - left + offset_x
         ty = (self.h - th) // 2 - top + offset_y
         
@@ -57,8 +63,8 @@ class SlotMachineClock:
                 
             # Draw spinning blur (fake numbers)
             blur_y = ty + (int(self.y_offset) % (th * 2))
-            draw.text((tx, blur_y - (th * 2)), "88:88", font=font, fill=(100, 100, 100))
-            draw.text((tx, blur_y), "88:88", font=font, fill=(150, 150, 150))
+            draw_styled_text(img, "88:88", (tx, blur_y - (th * 2)), font, 19, (100, 100, 100), (100, 100, 100), scale=scale_factor)
+            draw_styled_text(img, "00:00", (tx, blur_y), font, 19, (50, 50, 50), (50, 50, 50), scale=scale_factor)
             
             # Mask out the overflow
             draw.rectangle([0, 0, self.w, ty - 3], fill=(0,0,0))
@@ -66,7 +72,7 @@ class SlotMachineClock:
             
         else:
             # Static time
-            draw.text((tx, ty), self.current_time, font=font, fill=color1)
+            draw_styled_text(img, self.current_time, (tx, ty), font, 19, color1, color2, scale=scale_factor)
             
             # Win effect when not spinning
             if self.anim_frame % 20 < 10:

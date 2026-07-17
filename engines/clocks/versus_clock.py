@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import math
+from core.theme import draw_styled_text
 
 class VersusClock:
     def __init__(self, width, height):
@@ -7,7 +8,7 @@ class VersusClock:
         self.h = height
         self.anim_frame = 0
 
-    def tick(self, img, time_str, font, color1, color2):
+    def tick(self, img, time_str, font, color1, color2, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         self.anim_frame += 1
@@ -46,7 +47,10 @@ class VersusClock:
             
         # KO in middle
         if (self.anim_frame // 10) % 2 == 0:
-            draw.text(((self.w // 2) - 5, 0), "KO", font=font, fill=(255, 0, 0))
+            ko_scale = scale_factor
+            ko_bbox = draw.textbbox((0, 0), "KO", font=font)
+            ko_w = (ko_bbox[2] - ko_bbox[0]) * ko_scale
+            draw_styled_text(img, "KO", ((self.w - ko_w) // 2, 0), font, 19, (255, 0, 0), (255, 0, 0), scale=ko_scale)
             
         # Player names (P1, P2) or just draw the time really big in the center
         try:
@@ -58,12 +62,17 @@ class VersusClock:
             tw, th = 30, 10
             left, top = 0, 0
             
+        tw *= scale_factor
+        th *= scale_factor
+        left *= scale_factor
+        top *= scale_factor
+            
         tx = (self.w - tw) // 2 - left
         ty = (self.h - th) // 2 - top + 4
         
-        # Draw background shadow for time
-        draw.text((tx + 1, ty + 1), time_str, font=font, fill=(0, 0, 0))
-        draw.text((tx, ty), time_str, font=font, fill=color1)
+        # Draw background shadow for time (offset by scale_factor)
+        draw_styled_text(img, time_str, (tx + (1 * scale_factor), ty + (1 * scale_factor)), font, 19, (0, 0, 0), (0, 0, 0), scale=scale_factor)
+        draw_styled_text(img, time_str, (tx, ty), font, 19, color1, color1, scale=scale_factor)
         
         # Fighter idle bounce simulation at bottom corners
         bounce1 = math.sin(self.anim_frame * 0.2) * 2

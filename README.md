@@ -114,29 +114,49 @@ If you prefer to edit settings manually instead of using the Web UI, you can dir
 This is especially useful for setting up Wi-Fi before the first boot.
 
 ### 🌐 [WIFI]
-* `SSID`: The name of your Wi-Fi network.
-* `PASS`: The password for your Wi-Fi network.
-* `CONFIGURED`: Set to `false` to force the Raspberry Pi to attempt a connection on its next boot. Once connected successfully, the system automatically sets this back to `true`.
+| Parameter | Default | Description |
+|---|---|---|
+| `SSID` | `YourNetworkName` | The name of your Wi-Fi network. |
+| `PASS` | `YourNetworkPassword` | The password for your Wi-Fi network. |
+| `CONFIGURED` | `false` | Set to `false` to force the Raspberry Pi to attempt a Wi-Fi connection on its next boot. Automatically sets back to `true` on success. |
 
 ### 🎛️ [MATRIX]
-* `ROWS` & `COLS`: The pixel dimensions of a single LED panel (e.g., `ROWS=32`, `COLS=64`).
-* `HARDWARE_MAPPING`: The type of HAT/wiring used. Use `adafruit-hat` or `adafruit-hat-pwm` for Adafruit HATs. Use `regular-pi1` or `regular` if wiring directly to the GPIO.
-* `CHAIN` & `PARALLEL`: Use `CHAIN` to specify how many panels are daisy-chained horizontally. Use `PARALLEL` if you are using multiple HUB75 ports vertically.
-* `SLOWDOWN`: Increase this value (1 to 4) if your Matrix has visual glitches, flickering, or artifacts (especially on Raspberry Pi 3 and 4).
+| Parameter | Default | Description |
+|---|---|---|
+| `ROWS` / `COLS` | `32` / `64` | The pixel dimensions of a single LED panel. |
+| `HARDWARE_MAPPING` | `adafruit-hat` | Type of HAT/wiring used. (`adafruit-hat`, `adafruit-hat-pwm`, `regular-pi1`, `regular`). |
+| `CHAIN` / `PARALLEL` | `1` / `1` | `CHAIN` for horizontal daisy-chaining. `PARALLEL` for vertical stacking on multiple HUB75 ports. |
+| `SLOWDOWN` | `2` | Hardware slowdown (1 to 4). Increase if your Matrix has flickering or visual artifacts (especially Pi 3/4). |
+| `BRIGHTNESS` | `100` | Global matrix brightness (1 to 100). |
+| `RGB_SEQUENCE` | `RGB` | Color order. Change to `RBG` or `BGR` if your colors look swapped. |
 
 ### ⏰ [TIME] & [DATE]
-* `FORMAT_24H`: Set to `true` for 24-hour format, or `false` for 12-hour AM/PM format.
-* `CLOCK_FONT`: Name of the `.ttf` or `.bdf` file in the `/fonts/` folder to use for the clock.
-* `THEME`: The numeric ID of the animated clock or date theme (as seen in the Web UI).
+| Parameter | Default | Description |
+|---|---|---|
+| `FORMAT_24H` | `true` | `true` for 24-hour format, `false` for 12-hour AM/PM format. |
+| `CLOCK_FONT` | `DotGothic16.ttf`| Name of the `.ttf` or `.bdf` file in the `/fonts/` folder to use for the clock. |
+| `CLOCK_SIZE` | `16` | Font size (scaling factor) for the clock. |
+| `THEME` | `0` | The numeric ID of the animated clock theme (e.g. 19 for Flip, 21 for True Matrix). |
+| `CLOCK_COLOR_1` | `#ffffff` | Primary hex color. Used for gradients if theme is Custom (20). |
+| `CLOCK_COLOR_2` | `#ffffff` | Secondary hex color. Used for gradients if theme is Custom (20). |
+
+*(The `[DATE]` section contains identical parameters for configuring the date display).*
 
 ### 🔄 [IDLE]
-* `ROTATION`: Dictates the rotation behavior (`clock`, `gifs`, `sprites`, or `all`).
-* `CLOCK_DURATION_SEC`: How long the clock stays on screen during rotation.
-* `SELECTED_GIFS` / `SELECTED_SPRITES`: A comma-separated list of media you want to loop. Leave empty to play everything.
+| Parameter | Default | Description |
+|---|---|---|
+| `ROTATION` | `all` | Dictates rotation behavior (`clock`, `gifs`, `sprites`, or `all`). |
+| `CLOCK_DURATION_SEC`| `10` | How long the clock/date stays on screen during the rotation loop. |
+| `GIF_DURATION_SEC` | `10` | How long a single GIF stays on screen before advancing. |
+| `SELECTED_GIFS` | *(empty)* | Comma-separated list of media to loop. Leave empty to play everything. |
+| `SELECTED_SPRITES` | *(empty)* | Comma-separated list of sprites to loop. Leave empty to play everything. |
 
 ### 🌙 [STANDBY]
-* `NIGHT_MODE_ENABLED`: If `true`, the Matrix will automatically turn off and wake up at the specified times.
-* `TURN_OFF_AT` & `WAKE_UP_AT`: HH:MM formatted times for the Night Mode schedule.
+| Parameter | Default | Description |
+|---|---|---|
+| `NIGHT_MODE_ENABLED`| `false` | If `true`, the Matrix will automatically turn off and wake up. |
+| `TURN_OFF_AT` | `23:00` | HH:MM formatted time for screen sleep. |
+| `WAKE_UP_AT` | `07:00` | HH:MM formatted time for screen wake. |
 
 ## 📜 License
 This project is open-source. Enjoy your Ultimate Retro Arcade Clock!
