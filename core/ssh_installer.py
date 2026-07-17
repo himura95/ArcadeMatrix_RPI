@@ -164,11 +164,11 @@ def main():
             if img:
                 subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
             else:
-                msg = f'{{"status": "{{status}}", "game": "{{gbase}}", "system": "{{system}}"}}'
+                msg = '{{"status": "' + status + '", "game": "' + gbase + '", "system": "' + system + '"}}'
                 subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
                 
         elif event in ["quitgame"]:
-            subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", '{"status": "stopped"}'])
+            subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", '{{"status": "stopped"}}'])
 
 if __name__ == "__main__":
     main()
