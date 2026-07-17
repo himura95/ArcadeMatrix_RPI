@@ -146,7 +146,7 @@ if __name__ == "__main__":
     main()
 """
             launcher_code = """#!/bin/sh
-python3 /recalbox/share/userscripts/arcadematrix_daemon.py &
+python3 /recalbox/share/userscripts/arcadematrix_daemon.py > /recalbox/share/userscripts/daemon.log 2>&1 &
 """
             logging.info(f"Creating directory {target_dir}...")
             ssh.exec_command(f"mkdir -p {target_dir}")
