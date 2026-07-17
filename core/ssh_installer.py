@@ -122,6 +122,8 @@ def main():
     print("Daemon started (Polling mode)!", flush=True)
     time.sleep(5)
     last_signature = None
+    last_sent_signature = None
+    stable_count = 0
     
     while True:
         try:
@@ -130,12 +132,18 @@ def main():
                 time.sleep(0.1)
                 continue
                 
-            # If the state or selected game changes, update the matrix
             signature = (rom_path, state)
             if signature != last_signature:
                 last_signature = signature
+                stable_count = 0
+            else:
+                stable_count += 1
                 
-                print("Change detected: rom=" + str(rom_path) + ", state=" + str(state), flush=True)
+            # If stable for ~0.2s and we haven't sent it yet
+            if stable_count >= 2 and signature != last_sent_signature:
+                last_sent_signature = signature
+                
+                print("Stable change detected: rom=" + str(rom_path) + ", state=" + str(state), flush=True)
                 gbase = os.path.splitext(os.path.basename(rom_path))[0]
                 
                 if img and os.path.exists(img):
