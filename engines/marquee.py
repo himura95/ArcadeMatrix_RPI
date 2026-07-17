@@ -21,9 +21,13 @@ class MarqueeEngine:
             logging.error(f"MarqueeEngine: Cannot open image {image_path}: {e}")
             return
 
-        # Resize image to fit matrix while keeping aspect ratio (padding with black)
+        # Fast resizing while maintaining aspect ratio (thumbnail is highly optimized)
         if image.size != (self.config.matrix_width, self.config.matrix_height):
-            image = ImageOps.pad(image, (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0), method=Image.Resampling.LANCZOS)
+            bg = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), (0, 0, 0))
+            image.thumbnail((self.config.matrix_width, self.config.matrix_height), Image.Resampling.BICUBIC)
+            offset = ((self.config.matrix_width - image.width) // 2, (self.config.matrix_height - image.height) // 2)
+            bg.paste(image, offset)
+            image = bg
 
         canvas = self.mw.get_canvas()
         if not canvas:
