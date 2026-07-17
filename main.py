@@ -68,7 +68,11 @@ class ArcadeMatrixApp:
             return
             
         logging.info(f"Connecting to MQTT broker at {self.config.mqtt_broker}:{self.config.mqtt_port}")
-        self.mqtt_client = mqtt.Client(client_id=self.config.mqtt_device)
+        try:
+            # Handle newer paho-mqtt versions without warnings
+            self.mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id=self.config.mqtt_device)
+        except AttributeError:
+            self.mqtt_client = mqtt.Client(client_id=self.config.mqtt_device)
         
         if self.config.mqtt_user and self.config.mqtt_pass:
             self.mqtt_client.username_pw_set(self.config.mqtt_user, self.config.mqtt_pass)
