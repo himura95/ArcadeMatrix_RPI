@@ -21,7 +21,7 @@ fi
 # 2. Update and install dependencies
 echo "Updating packages and installing system dependencies..."
 sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-dev python3-pil python3-flask python3-venv git build-essential curl cython3
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-dev python3-pil python3-flask python3-venv git build-essential curl cython3 mosquitto mosquitto-clients
 
 # Check if we are in the project root
 if [ ! -f "main.py" ]; then
