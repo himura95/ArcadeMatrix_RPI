@@ -8,17 +8,21 @@ class MarqueeEngine:
         self.config = config
 
     def run(self, count):
+        image_obj = getattr(self.config, 'image_obj', None)
         image_path = getattr(self.config, 'image_path', None)
-        if not image_path:
-            logging.warning("MarqueeEngine: No image_path provided in config.")
-            return
-
-        logging.info(f"Starting MarqueeEngine to display {image_path}")
-
-        try:
-            image = Image.open(image_path).convert('RGB')
-        except Exception as e:
-            logging.error(f"MarqueeEngine: Cannot open image {image_path}: {e}")
+        
+        if image_obj:
+            image = image_obj.copy()
+            logging.info("Starting MarqueeEngine with in-memory image")
+        elif image_path:
+            logging.info(f"Starting MarqueeEngine to display {image_path}")
+            try:
+                image = Image.open(image_path).convert('RGB')
+            except Exception as e:
+                logging.error(f"MarqueeEngine: Cannot open image {image_path}: {e}")
+                return
+        else:
+            logging.warning("MarqueeEngine: No image provided in config.")
             return
 
         # Fast resizing while maintaining aspect ratio (thumbnail is highly optimized)

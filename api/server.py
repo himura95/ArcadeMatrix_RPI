@@ -315,18 +315,21 @@ def api_marquee():
         
     file = request.files['image']
     if file.filename == '':
-        return jsonify({'status': 'error', 'message': 'Empty file'}), 400
-        
-    save_path = '/tmp/marquee.png'
+        return jsonify({"status": "error", "message": "No selected file"}), 400
+
     try:
-        file.save(save_path)
-        config.image_path = save_path
-        config.force_engine = 'marquee'
-        config.reload_flag = True
-        return jsonify({'status': 'success', 'message': 'Marquee image received and displayed'})
+        from PIL import Image
+        image = Image.open(file.stream).convert('RGB')
     except Exception as e:
-        logging.error(f"Failed to save marquee image: {e}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({"status": "error", "message": f"Invalid image: {e}"}), 400
+
+    # Force rotation to display marquee directly from memory
+    config.image_obj = image
+    config.image_path = None
+    config.force_engine = 'marquee'
+    config.reload_flag = True
+
+    return jsonify({"status": "success", "message": "Marquee image received and displayed"})
 
 @app.route('/api/mqtt/install', methods=['POST'])
 def api_mqtt_install():
