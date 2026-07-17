@@ -103,44 +103,17 @@ TOPIC = "recalbox/system/playing"
 def parse_statefile():
     game = None
     system = None
-    if os.path.exists("/tmp/statefile"):
-        with open("/tmp/statefile", "r") as f:
+    image = None
+    if os.path.exists("/tmp/es_state.inf"):
+        with open("/tmp/es_state.inf", "r") as f:
             for line in f:
-                if line.lower().startswith("game=") or line.lower().startswith("rom="):
+                if line.startswith("GamePath="):
                     game = line.split("=", 1)[1].strip()
-                elif line.lower().startswith("system="):
+                elif line.startswith("SystemId="):
                     system = line.split("=", 1)[1].strip()
-    return game, system
-
-def find_image(rom_path, system):
-    if not rom_path: return None
-    rom_dir = os.path.dirname(rom_path)
-    gamelist_path = os.path.join(rom_dir, "gamelist.xml")
-    if os.path.exists(gamelist_path):
-        try:
-            tree = ET.parse(gamelist_path)
-            root = tree.getroot()
-            rom_basename = os.path.basename(rom_path)
-            for game in root.findall('game'):
-                path_node = game.find('path')
-                if path_node is not None and path_node.text and path_node.text.endswith(rom_basename):
-                    image_node = game.find('image')
-                    if image_node is not None and image_node.text:
-                        img_rel = image_node.text
-                        if img_rel.startswith("./"): img_rel = img_rel[2:]
-                        img_abs = os.path.join(rom_dir, img_rel)
-                        if os.path.exists(img_abs): return img_abs
-        except Exception:
-            pass
-            
-    # Fallback search
-    game_base = os.path.splitext(os.path.basename(rom_path))[0]
-    for ext in ['png', 'jpg', 'gif']:
-        for pre in ["images/", "downloaded_images/", "media/marquees/", "media/images/", "media/wheels/", ""]:
-            for suf in ["-marquee", "-wheel", "-image", "-thumb", ""]:
-                p = os.path.join(rom_dir, f"{{pre}}{{game_base}}{{suf}}.{{ext}}")
-                if os.path.exists(p): return p
-    return None
+                elif line.startswith("ImagePath="):
+                    image = line.split("=", 1)[1].strip()
+    return game, system, image
 
 def main():
     time.sleep(5)
@@ -154,17 +127,16 @@ def main():
         event = line.strip().lower()
         if event in ["gamelistbrowsing", "rungame"]:
             time.sleep(0.1)
-            rom_path, system = parse_statefile()
+            rom_path, system, img = parse_statefile()
             if not rom_path: continue
             
-            img = find_image(rom_path, system)
             status = "playing" if event == "rungame" else "browsing"
             gbase = os.path.splitext(os.path.basename(rom_path))[0]
             
-            if img:
+            if img and os.path.exists(img):
                 subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
             else:
-                msg = '{{"status": "' + status + '", "game": "' + gbase + '", "system": "' + system + '"}}'
+                msg = '{{"status": "' + status + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
                 subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
                 
         elif event in ["quitgame"]:
