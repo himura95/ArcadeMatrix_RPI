@@ -100,63 +100,142 @@ import xml.etree.ElementTree as ET
 BROKER = "{matrix_ip}"
 TOPIC = "recalbox/system/playing"
 
+def shrink_image(img_path):
+    thumb = "/tmp/am_thumb.png"
+    try:
+        from PIL import Image as PILImage
+        im = PILImage.open(img_path).convert("RGBA")
+        im.thumbnail((128, 64))
+        im.save(thumb, "PNG")
+        return thumb
+    except Exception:
+        pass
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "quiet", "-i", img_path,
+             "-vf", "scale=128:-1", thumb],
+            capture_output=True, timeout=3)
+        if r.returncode == 0:
+            return thumb
+    except Exception:
+        pass
+    return img_path
+
+def find_marquee(rom_path, system):
+    if not rom_path:
+        return None
+    rom_dir = os.path.dirname(rom_path)
+    rom_base = os.path.basename(rom_path)
+    game_name = os.path.splitext(rom_base)[0]
+
+    # 1) Parse gamelist.xml for <marquee> or <wheel> tag
+    gamelist = os.path.join(rom_dir, "gamelist.xml")
+    if os.path.exists(gamelist):
+        try:
+            tree = ET.parse(gamelist)
+            for game in tree.getroot().findall("game"):
+                path_node = game.find("path")
+                if path_node is None or not path_node.text:
+                    continue
+                if not path_node.text.endswith(rom_base):
+                    continue
+                # Try marquee first, then wheel
+                for tag in ["marquee", "wheel"]:
+                    node = game.find(tag)
+                    if node is not None and node.text:
+                        rel = node.text
+                        if rel.startswith("./"):
+                            rel = rel[2:]
+                        full = os.path.join(rom_dir, rel)
+                        if os.path.exists(full):
+                            return full
+        except Exception:
+            pass
+
+    # 2) Filesystem search in common marquee/wheel directories
+    for subdir in ["media/marquees", "media/wheels", "media/wheel",
+                    "media/marquee", "downloaded_images"]:
+        d = os.path.join(rom_dir, subdir)
+        if os.path.isdir(d):
+            for fname in os.listdir(d):
+                name_no_ext = os.path.splitext(fname)[0]
+                # Fuzzy match: filename starts with game name
+                if name_no_ext.lower().startswith(game_name.lower()[:10]):
+                    return os.path.join(d, fname)
+
+    return None
+
 def parse_statefile():
     game = None
     system = None
     image = None
     state = "browsing"
-    if os.path.exists("/tmp/es_state.inf"):
-        with open("/tmp/es_state.inf", "r") as f:
-            for line in f:
-                if line.startswith("GamePath="):
-                    game = line.split("=", 1)[1].strip()
-                elif line.startswith("SystemId="):
-                    system = line.split("=", 1)[1].strip()
-                elif line.startswith("ImagePath="):
-                    image = line.split("=", 1)[1].strip()
-                elif line.startswith("State="):
-                    state = line.split("=", 1)[1].strip()
+    try:
+        if os.path.exists("/tmp/es_state.inf"):
+            with open("/tmp/es_state.inf", "r") as f:
+                for line in f:
+                    if line.startswith("GamePath="):
+                        game = line.split("=", 1)[1].strip()
+                    elif line.startswith("SystemId="):
+                        system = line.split("=", 1)[1].strip()
+                    elif line.startswith("ImagePath="):
+                        image = line.split("=", 1)[1].strip()
+                    elif line.startswith("State="):
+                        state = line.split("=", 1)[1].strip()
+    except Exception:
+        pass
     return game, system, image, state
 
 def main():
-    print("Daemon started (Polling mode)!", flush=True)
+    print("Daemon started (v4 - marquee/wheel priority)!", flush=True)
     time.sleep(5)
-    last_signature = None
-    last_sent_signature = None
-    stable_count = 0
-    
+    last_game = None
+    last_sent = None
+    pending_since = 0
+    curl_proc = None
+
     while True:
         try:
-            rom_path, system, img, state = parse_statefile()
+            rom_path, system, scraper_img, state = parse_statefile()
             if not rom_path:
-                time.sleep(0.1)
+                time.sleep(0.05)
                 continue
-                
-            signature = (rom_path, state)
-            if signature != last_signature:
-                last_signature = signature
-                stable_count = 0
-            else:
-                stable_count += 1
-                
-            # If stable for ~0.2s and we haven't sent it yet
-            if stable_count >= 2 and signature != last_sent_signature:
-                last_sent_signature = signature
-                
-                print("Stable change detected: rom=" + str(rom_path) + ", state=" + str(state), flush=True)
+
+            if rom_path != last_game:
+                last_game = rom_path
+                pending_since = time.time()
+
+            elapsed = time.time() - pending_since
+            if elapsed >= 0.15 and rom_path != last_sent:
+                last_sent = rom_path
                 gbase = os.path.splitext(os.path.basename(rom_path))[0]
-                
-                if img and os.path.exists(img):
-                    print("Sending image via HTTP: " + str(img), flush=True)
-                    subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
+
+                if curl_proc and curl_proc.poll() is None:
+                    try:
+                        curl_proc.kill()
+                    except Exception:
+                        pass
+
+                # Priority: marquee/wheel > scraper image > text-only
+                img = find_marquee(rom_path, system)
+                if not img and scraper_img and os.path.exists(scraper_img):
+                    img = scraper_img
+
+                if img:
+                    small = shrink_image(img)
+                    print("Sending: " + small + " (from " + img + ")", flush=True)
+                    curl_proc = subprocess.Popen(
+                        ["curl", "-s", "-X", "POST", "-F",
+                         "image=@" + small,
+                         "http://" + BROKER + ":8080/api/marquee"])
                 else:
-                    print("Sending text via MQTT: " + str(gbase), flush=True)
+                    print("Sending text: " + gbase, flush=True)
                     msg = '{{"status": "' + state + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
                     subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
         except Exception as e:
-            print("Error in polling loop: " + str(e), flush=True)
-            
-        time.sleep(0.1)
+            print("Error: " + str(e), flush=True)
+
+        time.sleep(0.05)
 
 if __name__ == "__main__":
     main()
