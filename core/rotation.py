@@ -18,7 +18,8 @@ class RotationManager:
             'weather': WeatherEngine(matrix_wrapper, config, self.fighter_engine),
             'network': NetworkEngine(matrix_wrapper, config, self.fighter_engine),
             'gifs': GifEngine(matrix_wrapper, config),
-            'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(matrix_wrapper, config)
+            'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(matrix_wrapper, config),
+            'marquee': __import__('engines.marquee', fromlist=['MarqueeEngine']).MarqueeEngine(matrix_wrapper, config)
         }
 
     def start_loop(self):
@@ -45,7 +46,8 @@ class RotationManager:
                         'weather': WeatherEngine(self.mw, self.config, self.fighter_engine),
                         'network': NetworkEngine(self.mw, self.config, self.fighter_engine),
                         'gifs': GifEngine(self.mw, self.config),
-                        'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(self.mw, self.config)
+                        'message': __import__('engines.message', fromlist=['MessageEngine']).MessageEngine(self.mw, self.config),
+                        'marquee': __import__('engines.marquee', fromlist=['MarqueeEngine']).MarqueeEngine(self.mw, self.config)
                     }
                     break
                     
@@ -71,6 +73,8 @@ class RotationManager:
                     engine.run(self.config.idle_gifs_count)
                 elif engine_name == 'message':
                     engine.run()
+                elif engine_name == 'marquee':
+                    engine.run(1)
                     
                 # Small pause between engines for smooth transition
                 if not is_single:

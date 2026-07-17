@@ -3,3 +3,4 @@ Pillow
 paho-mqtt
 requests
 psutil
+paramiko==3.4.0

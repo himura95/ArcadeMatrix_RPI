@@ -575,10 +575,21 @@
             </div>
             <div class="form-group">
               <label data-i18n="label_mqtt_ip">MQTT Broker IP</label>
-              <input type="text" id="setting-mqtt-broker" class="text-input" placeholder="192.168.x.x" />
+              <input type="text" id="setting-mqtt-broker" class="text-input" placeholder="127.0.0.1" />
             </div>
-            <div class="form-group">
-              <label>MQTT Port</label>
+            
+            <div class="form-group" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.1);">
+              <label>Recalbox / Batocera Auto-Sync Installer</label>
+              <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.5rem;">Enter your console's IP address to automatically install the network sync script.</p>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="install-recalbox-ip" class="text-input" placeholder="192.168.1.xxx" style="flex:1;" />
+                <button type="button" id="btn-install-recalbox" class="btn secondary">Install via SSH</button>
+              </div>
+              <div id="install-ssh-result" style="margin-top:0.5rem; font-size:0.8rem;"></div>
+            </div>
+
+            <div class="form-group" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.1);">
+              <label data-i18n="label_mqtt_port">MQTT Port</label>
               <input type="number" id="setting-mqtt-port" class="text-input" value="1883" />
             </div>
             <div class="form-group">
@@ -716,14 +727,48 @@
       }
       
       const btnShutdown = document.getElementById('btn-shutdown');
-      if (btnShutdown) {
+        if (btnShutdown) {
           btnShutdown.addEventListener('click', () => {
-              if (confirm("Are you sure you want to shut down the Raspberry Pi?")) {
-                  fetch('/api/system/shutdown', { method: 'POST' });
-                  alert("Shutting down... You will need to unplug and replug the power to start it again.");
-              }
+            if (confirm("Shut down the system?")) {
+              fetch('/api/system/shutdown', { method: 'POST' });
+              setTimeout(() => { window.location.reload(); }, 5000);
+            }
           });
-      }
+        }
+        
+        const btnInstallRecalbox = document.getElementById('btn-install-recalbox');
+        if (btnInstallRecalbox) {
+          btnInstallRecalbox.addEventListener('click', async () => {
+            const ip = document.getElementById('install-recalbox-ip').value.trim();
+            const resultDiv = document.getElementById('install-ssh-result');
+            if (!ip) {
+              resultDiv.innerHTML = '<span style="color:#ef4444;">Please enter an IP address.</span>';
+              return;
+            }
+            btnInstallRecalbox.disabled = true;
+            btnInstallRecalbox.textContent = "Installing...";
+            resultDiv.innerHTML = '<span style="color:#3b82f6;">Connecting via SSH... Please wait.</span>';
+            
+            try {
+              const res = await fetch('/api/mqtt/install', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ip: ip })
+              });
+              const data = await res.json();
+              if (res.ok) {
+                resultDiv.innerHTML = `<span style="color:#10b981;">${data.message}</span>`;
+              } else {
+                resultDiv.innerHTML = `<span style="color:#ef4444;">${data.message}</span>`;
+              }
+            } catch (e) {
+              resultDiv.innerHTML = `<span style="color:#ef4444;">Error: ${e.message}</span>`;
+            } finally {
+              btnInstallRecalbox.disabled = false;
+              btnInstallRecalbox.textContent = "Install via SSH";
+            }
+          });
+        }
 
       const saveHardwareBtn = document.getElementById('btn-save-hardware');
       if (saveHardwareBtn) {

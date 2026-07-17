@@ -308,6 +308,54 @@ def api_wifi():
     else:
         return jsonify({'status': 'error', 'message': f'Failed to connect: {result.stderr}'}), 500
 
+@app.route('/api/marquee', methods=['POST'])
+def api_marquee():
+    if 'image' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No image provided'}), 400
+        
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'Empty file'}), 400
+        
+    save_path = '/tmp/marquee.png'
+    try:
+        file.save(save_path)
+        config.image_path = save_path
+        config.force_engine = 'marquee'
+        config.reload_flag = True
+        return jsonify({'status': 'success', 'message': 'Marquee image received and displayed'})
+    except Exception as e:
+        logging.error(f"Failed to save marquee image: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/mqtt/install', methods=['POST'])
+def api_mqtt_install():
+    data = request.json
+    target_ip = data.get('ip')
+    if not target_ip:
+        return jsonify({'status': 'error', 'message': 'No IP provided'}), 400
+        
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        matrix_ip = s.getsockname()[0]
+    except Exception:
+        matrix_ip = '127.0.0.1'
+    finally:
+        s.close()
+        
+    try:
+        import core.ssh_installer as ssh_installer
+        success, message = ssh_installer.install_sync_script(target_ip, matrix_ip)
+        if success:
+            return jsonify({'status': 'success', 'message': message})
+        else:
+            return jsonify({'status': 'error', 'message': message}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/system/reboot', methods=['POST'])
 def api_reboot():
     import subprocess
