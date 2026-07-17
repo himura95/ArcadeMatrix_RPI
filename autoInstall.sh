@@ -23,6 +23,10 @@ echo "Updating packages and installing system dependencies..."
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-dev python3-pil python3-flask python3-venv git build-essential curl cython3 mosquitto mosquitto-clients
 
+# Configure Mosquitto to allow external anonymous connections (Required for Recalbox/Batocera)
+echo "Configuring Mosquitto MQTT Broker..."
+sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
+sudo systemctl restart mosquitto || true
 # Check if we are in the project root
 if [ ! -f "main.py" ]; then
     echo "main.py not found. It looks like you ran this script standalone."
