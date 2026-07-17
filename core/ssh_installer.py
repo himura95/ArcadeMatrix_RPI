@@ -116,26 +116,33 @@ def parse_statefile():
     return game, system, image
 
 def main():
+    print("Daemon started!", flush=True)
     time.sleep(5)
-    cmd = ["mosquitto_sub", "-h", "127.0.0.1", "-t", "/Recalbox/EmulationStation/Event"]
+    cmd = ["mosquitto_sub", "-h", "127.0.0.1", "-t", "/Recalbox/EmulationStation/Event", "-t", "Recalbox/EmulationStation/Event"]
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-    except Exception:
+        print("Subscribed to MQTT...", flush=True)
+    except Exception as e:
+        print(f"Error starting mosquitto_sub: {e}", flush=True)
         return
         
     for line in iter(proc.stdout.readline, ''):
         event = line.strip().lower()
+        print(f"Received event: {event}", flush=True)
         if event in ["gamelistbrowsing", "rungame"]:
             time.sleep(0.1)
             rom_path, system, img = parse_statefile()
+            print(f"Parsed statefile: rom={rom_path}, sys={system}, img={img}", flush=True)
             if not rom_path: continue
             
             status = "playing" if event == "rungame" else "browsing"
             gbase = os.path.splitext(os.path.basename(rom_path))[0]
             
             if img and os.path.exists(img):
+                print(f"Sending image via HTTP: {img}", flush=True)
                 subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
             else:
+                print(f"Sending text via MQTT: {gbase}", flush=True)
                 msg = '{{"status": "' + status + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
                 subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
                 
