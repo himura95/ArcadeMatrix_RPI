@@ -132,7 +132,10 @@ fi
         logging.info("Making script executable...")
         ssh.exec_command(f"chmod +x {script_path}")
         
-        return True, f"Successfully installed on {system_name}!"
+        logging.info("Rebooting target system...")
+        ssh.exec_command("sleep 1 && reboot")
+        
+        return True, f"Successfully installed! {system_name} is now rebooting..."
         
     except Exception as e:
         logging.error(f"Error during installation: {e}")
