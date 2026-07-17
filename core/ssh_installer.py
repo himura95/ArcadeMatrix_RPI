@@ -85,19 +85,14 @@ if [ "$ACTION" = "rungame" ] || [ "$ACTION" = "gameStart" ] || [ "$ACTION" = "Ga
     # Search for marquee image
     MARQUEE_PATH=""
     for ext in png jpg gif; do
-        if [ -f "$ROM_DIR/images/${{GAME_BASENAME}}-marquee.$ext" ]; then
-            MARQUEE_PATH="$ROM_DIR/images/${{GAME_BASENAME}}-marquee.$ext"
-            break
-        elif [ -f "$ROM_DIR/images/${{GAME_BASENAME}}-wheel.$ext" ]; then
-            MARQUEE_PATH="$ROM_DIR/images/${{GAME_BASENAME}}-wheel.$ext"
-            break
-        elif [ -f "$ROM_DIR/images/${{GAME_BASENAME}}-image.$ext" ]; then
-            MARQUEE_PATH="$ROM_DIR/images/${{GAME_BASENAME}}-image.$ext"
-            break
-        elif [ -f "$ROM_DIR/downloaded_images/${{GAME_BASENAME}}-marquee.$ext" ]; then
-            MARQUEE_PATH="$ROM_DIR/downloaded_images/${{GAME_BASENAME}}-marquee.$ext"
-            break
-        fi
+        for prefix in "images/" "downloaded_images/" "media/marquees/" "media/images/" "media/wheels/" ""; do
+            for suffix in "-marquee" "-wheel" "-image" "-thumb" ""; do
+                if [ -f "$ROM_DIR/$prefix${{GAME_BASENAME}}$suffix.$ext" ]; then
+                    MARQUEE_PATH="$ROM_DIR/$prefix${{GAME_BASENAME}}$suffix.$ext"
+                    break 3
+                fi
+            done
+        done
     done
     
     if [ -n "$MARQUEE_PATH" ]; then
