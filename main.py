@@ -37,8 +37,31 @@ class ArcadeMatrixApp:
     def _on_mqtt_message(self, client, userdata, msg):
         payload = msg.payload.decode('utf-8')
         logging.info(f"MQTT Message received on {msg.topic}: {payload}")
-        # Here we could interrupt the rotation to display game info
-        # e.g., self.rotation_manager.interrupt_with_game(payload)
+        
+        import json
+        try:
+            data = json.loads(payload)
+            if data.get("status") == "playing":
+                game_name = data.get("game", "Unknown Game")
+                sys_name = data.get("system", "")
+                
+                text = f"Playing {game_name}"
+                if sys_name:
+                    text += f" [{sys_name}]"
+                
+                # Interrupt current rotation and scroll the game name
+                self.config.message_payload = {
+                    'text': text,
+                    'color': 0xFFFF, # White
+                    'size': 2,
+                    'direction': 'rtl',
+                    'speed': 30,
+                    'timeoutSeconds': 30
+                }
+                self.config.force_engine = 'message'
+                self.config.reload_flag = True
+        except Exception as e:
+            logging.error(f"Failed to parse MQTT json: {e}")
 
     def _setup_mqtt(self):
         if not MQTT_AVAILABLE or not self.config.mqtt_enabled:
