@@ -1,28 +1,143 @@
 # Architecture Overview
 
-This document explains how ArcadeMatrix works under the hood.
+This document provides a comprehensive overview of the ArcadeMatrix architecture on the Raspberry Pi. It explains the core design decisions, the rendering pipeline, threading models, and the project's overall philosophy.
 
-## The Core Loop
+---
 
-ArcadeMatrix uses a simple linear event loop to display frames on the hardware matrix. 
+## 1. Core Philosophy
 
-1. **`main.py`** initializes the `Config` and `MatrixWrapper`.
-2. It starts a Flask web server on a background thread for the API.
-3. It creates engines (`ClockEngine`, `DateEngine`, `WeatherEngine`, `GifEngine`, `FighterEngine`).
-4. The `RotationEngine` begins an infinite loop, calling `engine.run(duration)` for each active feature sequentially.
+ArcadeMatrix is designed to drive a HUB75 LED Matrix using the `hzeller/rpi-rgb-led-matrix` C++ library via its Python bindings. The primary goals are:
+- **Pixel-Perfect Rendering:** Support for sharp `.bdf` bitmap fonts and crisp sprites.
+- **Modularity:** Easy addition of new visual themes, clocks, and data sources.
+- **Responsiveness:** A snappy Web API that can interrupt and change the display instantly without crashing the hardware driver.
 
-## The Rendering Pipeline
+---
 
-To draw pixels, we separate the responsibilities into Data, Engine, Animation, and Rendering.
+## 2. The Rendering Pipeline
+
+To keep the codebase maintainable, we strictly separate the logic of *what* to display from *how* to draw it. 
+
+### High-Level Diagram
 
 ```mermaid
-graph TD;
-    Data[Data Sources: Time/API/Files] --> Engine;
-    Engine[Engine: e.g. ClockEngine] --> Animation;
-    Animation[Animation Layer: e.g. Flip Animation] --> Renderer;
-    Renderer[Renderer: e.g. CyberpunkRenderer] --> Matrix[Hardware Canvas];
+graph TD
+    subgraph Data Layer
+        API[Flask Web API]
+        Config[conf.ini / ConfigLoader]
+        Time[System Time]
+        Network[Weather / MQTT APIs]
+    end
+
+    subgraph Engine Layer
+        Rot[RotationManager]
+        ClockE[ClockEngine]
+        DateE[DateEngine]
+        WeathE[WeatherEngine]
+        Rot --> ClockE & DateE & WeathE
+    end
+
+    subgraph Logic & Aesthetic Layer
+        ClockE -->|Theme ID 0-21| Renderers[Renderers: Cyberpunk, Flip, Matrix]
+        ClockE -->|Theme ID 22+| SpClocks[Specialized Clocks: Pong, Tetris, PacMan]
+        Renderers --> Pil[Pillow Image Canvas]
+        SpClocks --> Pil
+    end
+
+    subgraph Hardware Layer
+        Pil --> Wrapper[MatrixWrapper]
+        Wrapper --> Hardware[HUB75 LED Matrix]
+    end
+
+    API -.->|Updates| Config
+    Config -.->|Signals| Rot
 ```
 
-## Threading
+### Class Relationship Diagram
 
-Rendering must occur on the main thread because the `rgbmatrix` C++ library uses hardware PWM that is sensitive to timing and context switches. Do NOT use Python `threading` or `asyncio` for pixel manipulation or loops inside the engines. The API Server runs on a background thread and communicates with the main thread using shared state (`Config`) and thread-safe flags (`config.reload_flag`).
+```mermaid
+classDiagram
+    class Config {
+        +int matrix_width
+        +int matrix_height
+        +bool reload_flag
+    }
+    
+    class MatrixWrapper {
+        +get_canvas()
+        +swap_canvas()
+    }
+    
+    class RotationManager {
+        +start_loop()
+    }
+    
+    class ClockEngine {
+        +run(duration_sec)
+    }
+    
+    class BaseRenderer {
+        <<Abstract>>
+        +render(img, text, font, theme_id, ...)
+        +animate(mw, prev_text, next_text, ...)
+    }
+    
+    class CyberpunkRenderer {
+        +render()
+    }
+    
+    class TetrisClock {
+        +tick(img, time_str, font, ...)
+    }
+    
+    RotationManager *-- ClockEngine : Manages
+    ClockEngine *-- TetrisClock : Uses (Themes 22+)
+    ClockEngine --> BaseRenderer : Delegates (Themes 0-21)
+    BaseRenderer <|-- CyberpunkRenderer : Inherits
+    ClockEngine --> Config : Reads state
+    ClockEngine --> MatrixWrapper : Requests canvas
+```
+
+### Components of the Pipeline
+
+1. **Engines (`engines/`)**: The controllers. They manage the `while` loops, fetch data (time, weather), and determine how long a feature stays on screen.
+2. **Renderers (`engines/renderers/`)**: The aesthetics. They take generic text (e.g., "12:30") and draw it onto a PIL image with a specific background (e.g., Cyberpunk, Flip animation, Matrix rain). They are reusable across different engines.
+3. **Specialized Clocks (`engines/clocks/`)**: The mini-games. Unlike renderers, these are complex state machines (e.g., a Pong game bouncing a ball, Tetris blocks falling) that dynamically construct the time display.
+4. **Fighter Engine (`engines/fighter.py`)**: An overlay engine that runs on top of the final rendered canvas to inject MUGEN sprites dynamically.
+
+---
+
+## 3. Threading Model
+
+ArcadeMatrix uses a dual-thread architecture.
+
+### The Main Thread (Hardware & Rendering)
+The `rgbmatrix` library relies on highly precise hardware PWM to prevent flickering on the LED matrix. Because Python's Global Interpreter Lock (GIL) and context switching can disrupt this timing, **all rendering and hardware communication must occur strictly on the main thread.**
+- Do NOT use `asyncio` or spawn new threads for drawing.
+- `time.sleep()` is heavily utilized in engine loops to yield execution cleanly without starving the DMA buffer.
+
+### The Background Thread (Web API)
+A lightweight Flask server runs on a secondary daemon thread (`api/server.py`). 
+- It serves the Vue.js frontend and exposes REST endpoints.
+- **Communication:** The API thread never draws to the matrix directly. Instead, it writes to the shared `Config` object in memory and sets thread-safe flags (e.g., `config.reload_flag = True` or `config.force_engine = "weather"`). The Main Thread detects these flags during its next loop iteration and gracefully aborts/restarts the engine to reflect the new settings.
+
+---
+
+## 4. BDF Font Scaling Engine
+
+Because HUB75 matrices have extremely low resolutions (e.g., 64x32), standard TrueType (`.ttf`) fonts often look blurry due to anti-aliasing. To solve this, we use `.bdf` bitmap fonts.
+
+However, PIL (Pillow) does not natively support scaling `.bdf` fonts. Our architecture intercepts `.bdf` rendering:
+1. It draws the `.bdf` text to a 1-bit binary mask at its original 1x scale.
+2. It scales the mask using the `NEAREST` neighbor algorithm to multiply its size perfectly (2x, 3x, etc.) without blurring.
+3. It recolors the scaled mask and pastes it onto the final RGB canvas.
+
+---
+
+## 5. RPi vs ESP32 Architecture Differences
+
+If you explore the `RetroPixelLED/ArcadeMatrix` repository, you will notice the ESP32 version is written in C++ and has a different architecture.
+
+- **RPi (Python):** Uses a decoupled Rendering Pipeline (Engines -> Renderers -> PIL Canvas -> Matrix). RAM is abundant (512MB+), allowing us to manipulate full RGB canvases in memory using Pillow before sending them to the hardware.
+- **ESP32 (C++):** Uses a Monolithic Engine structure. RAM is extremely limited (320KB). Instead of drawing to an off-screen canvas, the ESP32 code often writes pixels directly to the DMA buffer or uses minimal 1D arrays. It does not use a separated "Renderer" pipeline to avoid dynamic memory allocation and pointer overhead. 
+
+*This architectural divergence is intentional and optimizes for the specific constraints of each hardware platform.*
