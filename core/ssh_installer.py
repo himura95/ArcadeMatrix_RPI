@@ -52,7 +52,7 @@ ACTION=""
 STATEFILE=""
 
 # Parse arguments (Recalbox style)
-while [[ "$#" -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
     case $1 in
         -action) ACTION="$2"; shift ;;
         -statefile) STATEFILE="$2"; shift ;;
@@ -67,7 +67,7 @@ if [ -z "$ACTION" ]; then
     SYSTEM_NAME=$3
 fi
 
-if [[ "$ACTION" == "rungame" || "$ACTION" == "gameStart" || "$ACTION" == "GamelistBrowsing" || "$ACTION" == "gameSelected" ]]; then
+if [ "$ACTION" = "rungame" ] || [ "$ACTION" = "gameStart" ] || [ "$ACTION" = "GamelistBrowsing" ] || [ "$ACTION" = "gameSelected" ]; then
     
     # Read statefile for Recalbox
     if [ -n "$STATEFILE" ] && [ -f "$STATEFILE" ]; then
@@ -106,13 +106,13 @@ if [[ "$ACTION" == "rungame" || "$ACTION" == "gameStart" || "$ACTION" == "Gameli
     else
         # Fallback to Text via MQTT
         STATUS="playing"
-        if [[ "$ACTION" == "GamelistBrowsing" || "$ACTION" == "gameSelected" ]]; then
+        if [ "$ACTION" = "GamelistBrowsing" ] || [ "$ACTION" = "gameSelected" ]; then
             STATUS="browsing"
         fi
         mosquitto_pub -h "$BROKER" -t "$TOPIC" -m "{{\\"status\\": \\"$STATUS\\", \\"game\\": \\"$GAME_BASENAME\\", \\"system\\": \\"$SYSTEM_NAME\\"}}" &
     fi
 
-elif [[ "$ACTION" == "quitgame" || "$ACTION" == "gameStop" ]]; then
+elif [ "$ACTION" = "quitgame" ] || [ "$ACTION" = "gameStop" ]; then
     mosquitto_pub -h "$BROKER" -t "$TOPIC" -m "{{\\"status\\": \\"stopped\\"}}" &
 fi
 """

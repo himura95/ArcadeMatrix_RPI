@@ -26,7 +26,7 @@ ACTION=""
 STATEFILE=""
 
 # Parse les arguments de Recalbox (-action rungame -statefile /tmp/...)
-while [[ "$#" -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
     case $1 in
         -action) ACTION="$2"; shift ;;
         -statefile) STATEFILE="$2"; shift ;;
@@ -37,20 +37,32 @@ done
 BROKER="MQTT_BROKER_IP_PLACEHOLDER"
 TOPIC="recalbox/system/playing"
 
-if [[ "$ACTION" == "rungame" || "$ACTION" == "gameStart" ]]; then
+# Fallback for Batocera
+if [ -z "$ACTION" ]; then
+    ACTION=$1
+    ROM_PATH=$2
+    SYSTEM_NAME=$3
+fi
+
+if [ "$ACTION" = "rungame" ] || [ "$ACTION" = "gameStart" ] || [ "$ACTION" = "GamelistBrowsing" ] || [ "$ACTION" = "gameSelected" ]; then
     # Essayer de lire le statefile de Recalbox
     if [ -f "$STATEFILE" ]; then
         ROM_PATH=$(grep -i '^rom=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\r')
         SYSTEM_NAME=$(grep -i '^system=' "$STATEFILE" | cut -d'=' -f2- | tr -d '\r')
     else
         ROM_PATH=$2 # Fallback Batocera
-        SYSTEM_NAME=$3
+        STATUS="playing"
+        if [ "$ACTION" = "GamelistBrowsing" ] || [ "$ACTION" = "gameSelected" ]; then
+            STATUS="browsing"
+        fi
+        GAME_BASENAME=$(basename "$ROM_PATH" | sed 's/\.[^.]*$//')
+        mosquitto_pub -h "$BROKER" -t "$TOPIC" -m "{\"status\": \"$STATUS\", \"game\": \"$GAME_BASENAME\", \"system\": \"$SYSTEM_NAME\"}" &
     fi
     
     GAME_NAME=$(basename "$ROM_PATH" | sed 's/\.[^.]*$//')
     mosquitto_pub -h "$BROKER" -t "$TOPIC" -m "{\"status\": \"playing\", \"game\": \"$GAME_NAME\", \"system\": \"$SYSTEM_NAME\"}"
 
-elif [[ "$ACTION" == "quitgame" || "$ACTION" == "gameStop" ]]; then
+elif [ "$ACTION" = "quitgame" ] || [ "$ACTION" = "gameStop" ]; then
     mosquitto_pub -h "$BROKER" -t "$TOPIC" -m "{\"status\": \"stopped\"}"
 fi
 EOF
