@@ -104,6 +104,7 @@ def parse_statefile():
     game = None
     system = None
     image = None
+    state = "browsing"
     if os.path.exists("/tmp/es_state.inf"):
         with open("/tmp/es_state.inf", "r") as f:
             for line in f:
@@ -113,41 +114,41 @@ def parse_statefile():
                     system = line.split("=", 1)[1].strip()
                 elif line.startswith("ImagePath="):
                     image = line.split("=", 1)[1].strip()
-    return game, system, image
+                elif line.startswith("State="):
+                    state = line.split("=", 1)[1].strip()
+    return game, system, image, state
 
 def main():
-    print("Daemon started!", flush=True)
+    print("Daemon started (Polling mode)!", flush=True)
     time.sleep(5)
-    cmd = ["mosquitto_sub", "-h", "127.0.0.1", "-t", "/Recalbox/EmulationStation/Event", "-t", "Recalbox/EmulationStation/Event"]
-    try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-        print("Subscribed to MQTT...", flush=True)
-    except Exception as e:
-        print("Error starting mosquitto_sub: " + str(e), flush=True)
-        return
-        
-    for line in iter(proc.stdout.readline, ''):
-        event = line.strip().lower()
-        print("Received event: " + event, flush=True)
-        if event in ["gamelistbrowsing", "rungame"]:
-            time.sleep(0.1)
-            rom_path, system, img = parse_statefile()
-            print("Parsed statefile: rom=" + str(rom_path) + ", sys=" + str(system) + ", img=" + str(img), flush=True)
-            if not rom_path: continue
-            
-            status = "playing" if event == "rungame" else "browsing"
-            gbase = os.path.splitext(os.path.basename(rom_path))[0]
-            
-            if img and os.path.exists(img):
-                print("Sending image via HTTP: " + str(img), flush=True)
-                subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
-            else:
-                print("Sending text via MQTT: " + str(gbase), flush=True)
-                msg = '{{"status": "' + status + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
-                subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
+    last_signature = None
+    
+    while True:
+        try:
+            rom_path, system, img, state = parse_statefile()
+            if not rom_path:
+                time.sleep(0.1)
+                continue
                 
-        elif event in ["quitgame"]:
-            subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", '{{"status": "stopped"}}'])
+            # If the state or selected game changes, update the matrix
+            signature = (rom_path, state)
+            if signature != last_signature:
+                last_signature = signature
+                
+                print("Change detected: rom=" + str(rom_path) + ", state=" + str(state), flush=True)
+                gbase = os.path.splitext(os.path.basename(rom_path))[0]
+                
+                if img and os.path.exists(img):
+                    print("Sending image via HTTP: " + str(img), flush=True)
+                    subprocess.Popen(["curl", "-s", "-X", "POST", "-F", f"image=@{{img}}", f"http://{{BROKER}}:8080/api/marquee"])
+                else:
+                    print("Sending text via MQTT: " + str(gbase), flush=True)
+                    msg = '{{"status": "' + state + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
+                    subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
+        except Exception as e:
+            print("Error in polling loop: " + str(e), flush=True)
+            
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
