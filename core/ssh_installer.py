@@ -167,6 +167,10 @@ python3 /recalbox/share/userscripts/arcadematrix_daemon.py > /recalbox/share/use
             logging.info(f"Creating directory {target_dir}...")
             ssh.exec_command(f"mkdir -p {target_dir}")
             
+            # Clean up old manual installation scripts to prevent conflicts
+            logging.info("Cleaning up legacy scripts...")
+            ssh.exec_command(f"rm -f {target_dir}/recalbox_mqtt_status.sh {target_dir}/recalbox_mqtt_status\\(sync\\).sh")
+            
             sftp = ssh.open_sftp()
             
             daemon_path = f"{target_dir}/arcadematrix_daemon.py"
