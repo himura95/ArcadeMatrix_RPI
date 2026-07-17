@@ -167,9 +167,11 @@ python3 /recalbox/share/userscripts/arcadematrix_daemon.py > /recalbox/share/use
             logging.info(f"Creating directory {target_dir}...")
             ssh.exec_command(f"mkdir -p {target_dir}")
             
-            # Clean up old manual installation scripts to prevent conflicts
-            logging.info("Cleaning up legacy scripts...")
-            ssh.exec_command(f"rm -f {target_dir}/recalbox_mqtt_status.sh {target_dir}/recalbox_mqtt_status\\(sync\\).sh")
+            # Nuclear cleanup: remove ALL old scripts and kill ghost processes
+            logging.info("Cleaning up ALL legacy scripts...")
+            ssh.exec_command(f"cd {target_dir} && for f in *.sh; do case \"$f\" in 'arcadematrix_launcher(permanent).sh') ;; *) rm -f \"$f\" ;; esac; done")
+            ssh.exec_command("pkill -f recalbox_mqtt_status || true")
+            ssh.exec_command("pkill -f arcadematrix_mqtt || true")
             
             sftp = ssh.open_sftp()
             

@@ -1,4 +1,5 @@
 import os
+import threading
 from flask import Flask, jsonify, request, send_from_directory
 from core.config import Config
 import logging
@@ -6,6 +7,13 @@ import logging
 app = Flask(__name__, static_folder='www')
 config = Config()
 app_instance = None
+_marquee_timer = None
+_marquee_lock = threading.Lock()
+
+def _apply_marquee():
+    """Called after debounce period - triggers the actual display."""
+    config.force_engine = 'marquee'
+    config.reload_flag = True
 
 def set_app_instance(instance):
     global app_instance, config
@@ -310,6 +318,7 @@ def api_wifi():
 
 @app.route('/api/marquee', methods=['POST'])
 def api_marquee():
+    global _marquee_timer
     if 'image' not in request.files:
         return jsonify({'status': 'error', 'message': 'No image provided'}), 400
         
@@ -323,11 +332,15 @@ def api_marquee():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Invalid image: {e}"}), 400
 
-    # Force rotation to display marquee directly from memory
+    # Store image in memory immediately, but debounce the display trigger
     config.image_obj = image
     config.image_path = None
-    config.force_engine = 'marquee'
-    config.reload_flag = True
+
+    with _marquee_lock:
+        if _marquee_timer is not None:
+            _marquee_timer.cancel()
+        _marquee_timer = threading.Timer(0.15, _apply_marquee)
+        _marquee_timer.start()
 
     return jsonify({"status": "success", "message": "Marquee image received and displayed"})
 
