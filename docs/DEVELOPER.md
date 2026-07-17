@@ -93,6 +93,68 @@ If you want to create a complex clock that plays a game or builds the time block
 
 ---
 
+## Tutorial 3: Creating a New Screensaver Element (Engine)
+
+If you want to add a completely new module to the idle rotation (e.g., a Crypto price tracker), you need to create a full **Engine**.
+
+1. **Create the Engine File**:
+   Create `engines/crypto.py`.
+
+   ```python
+   import time
+   from PIL import Image, ImageDraw
+   from core.theme import load_font
+
+   class CryptoEngine:
+       def __init__(self, matrix_wrapper, config, fighter_engine=None):
+           self.mw = matrix_wrapper
+           self.config = config
+           self.fighter_engine = fighter_engine
+
+       def run(self, duration_sec):
+           start_time = time.time()
+           canvas = self.mw.get_canvas()
+           font = load_font("04B_03.ttf", 16)
+           
+           while time.time() - start_time < duration_sec:
+               if getattr(self.config, 'reload_flag', False):
+                   break
+                   
+               # 1. Fetch your data
+               price = "$65,000"
+               
+               # 2. Draw your canvas
+               img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), (0, 0, 0))
+               draw = ImageDraw.Draw(img)
+               draw.text((0, 0), f"BTC:\n{price}", font=font, fill=(255, 200, 0))
+               
+               # 3. Add Fighters overlay if enabled
+               if self.fighter_engine:
+                   img = self.fighter_engine.tick(img)
+                   
+               # 4. Push to hardware
+               canvas.SetImage(img)
+               canvas = self.mw.swap_canvas(canvas)
+               
+               time.sleep(1) # Loop speed
+   ```
+
+2. **Register the Engine in Rotation**:
+   Open `core/rotation.py`.
+   - Import your engine at the top: `from engines.crypto import CryptoEngine`
+   - Add it to the `self.engines` dictionary inside `__init__` and inside the `reload_flag` recreation block.
+   - Map its duration in the `run()` execution block:
+     ```python
+     elif engine_name == 'crypto':
+         engine.run(86400 if is_single else 10) # 10 seconds default
+     ```
+
+3. **Update UI & Configuration**:
+   - Update `api/server.py` to accept `'crypto'` in the rotation array.
+   - Update `api/www/index.html` to add a `<div class="feature-item" data-id="crypto">Crypto Tracker</div>` so users can drag-and-drop it into their active rotation.
+
+---
+
 ## API & Web UI Integration
 
 Whenever you create a new theme or clock:
