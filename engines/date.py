@@ -45,8 +45,14 @@ class DateEngine:
             
             date_str = self._get_date_string()
             
-            if renderer.animate(self.mw, prev_date_str, date_str, font, self.config.date_color_1, self.config.date_color_2, self.config.date_offset_x, self.config.date_offset_y, scale_factor):
-                pass
+            anim_frames = renderer.animate(self.mw, prev_date_str, date_str, font, self.config.date_color_1, self.config.date_color_2, self.config.date_offset_x, self.config.date_offset_y, scale_factor)
+            if anim_frames:
+                for anim_img in anim_frames:
+                    if self.fighter_engine:
+                        anim_img = self.fighter_engine.tick(anim_img)
+                    canvas.SetImage(anim_img)
+                    canvas = self.mw.swap_canvas(canvas)
+                    time.sleep(0.02)
                 
             prev_date_str = date_str
             

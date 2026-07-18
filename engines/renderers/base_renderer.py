@@ -31,6 +31,6 @@ class BaseRenderer:
     def animate(self, mw, prev_text, current_text, font, color1, color2, offset_x, offset_y, scale_factor=1.0):
         """
         Optional. Performs an animation directly on the MatrixWrapper canvas.
-        Returns True if an animation was performed, False otherwise.
+        Returns a list of frames if an animation was performed, empty list otherwise.
         """
-        return False
+        return []

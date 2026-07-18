@@ -67,10 +67,14 @@ class ClockEngine:
             
             time_str = self._get_time_string()
             
-            # Allow renderer to hijack the loop for complex animation (e.g., FlipRenderer)
-            if renderer.animate(self.mw, prev_time_str, time_str, font, self.config.clock_color_1, self.config.clock_color_2, self.config.time_offset_x, self.config.time_offset_y, scale_factor):
-                # The renderer already updated the matrix hardware canvas if needed
-                pass
+            anim_frames = renderer.animate(self.mw, prev_time_str, time_str, font, self.config.clock_color_1, self.config.clock_color_2, self.config.time_offset_x, self.config.time_offset_y, scale_factor)
+            if anim_frames:
+                for anim_img in anim_frames:
+                    if self.fighter_engine:
+                        anim_img = self.fighter_engine.tick(anim_img)
+                    canvas.SetImage(anim_img)
+                    canvas = self.mw.swap_canvas(canvas)
+                    time.sleep(0.02)
                 
             prev_time_str = time_str
             

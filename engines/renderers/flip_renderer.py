@@ -86,14 +86,13 @@ class FlipRenderer(BaseRenderer):
                 changed[i] = True
                 is_flipping = True
                 
+        frames = []
         if is_flipping:
             panel_w, panel_h, spacing, total_w = self._get_layout(current_text, font, scale_factor)
             start_x = (self.config.matrix_width - total_w) // 2 + offset_x
             y_pos = (self.config.matrix_height - panel_h) // 2 + offset_y
 
             # 8 frames of animation
-            canvas = mw.matrix.CreateFrameCanvas() if mw and hasattr(mw, 'matrix') else None
-            
             for flip_frame in range(1, 9):
                 anim_img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), color=(0, 0, 0))
                 anim_draw = ImageDraw.Draw(anim_img)
@@ -126,10 +125,7 @@ class FlipRenderer(BaseRenderer):
                         
                     cx += panel_w + spacing
                     
-                if canvas:
-                    canvas.SetImage(anim_img)
-                    canvas = mw.swap_canvas(canvas)
-                time.sleep(0.02)
+                frames.append(anim_img)
                 
         self.prev_digits = time_chars.copy()
-        return is_flipping
+        return frames
