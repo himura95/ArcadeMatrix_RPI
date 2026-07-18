@@ -8,22 +8,46 @@ class FlipRenderer(BaseRenderer):
         super().__init__(config)
         self.prev_digits = None
 
+    def _get_layout(self, text, font, scale_factor):
+        dummy_img = Image.new('RGB', (1, 1))
+        draw = ImageDraw.Draw(dummy_img)
+        max_char_w = 0
+        max_char_h = 0
+        for char in "0123456789AMP ":
+            try:
+                left, top, right, bottom = draw.textbbox((0, 0), char, font=font)
+                w = (right - left) * scale_factor
+                h = (bottom - top) * scale_factor
+                max_char_w = max(max_char_w, w)
+                max_char_h = max(max_char_h, h)
+            except Exception:
+                max_char_w = max(max_char_w, 6 * scale_factor)
+                max_char_h = max(max_char_h, 10 * scale_factor)
+                
+        if max_char_w == 0: max_char_w = 6 * scale_factor
+        if max_char_h == 0: max_char_h = 10 * scale_factor
+        
+        panel_w = max(4, int(max_char_w + 2))
+        panel_h = max(8, int(max_char_h + 4))
+        spacing = 2
+        
+        total_w = 0
+        for char in text:
+            if char in [':', '/', '.', '-']:
+                total_w += 2 + spacing
+            else:
+                total_w += panel_w + spacing
+                
+        if len(text) > 0:
+            total_w -= spacing
+            
+        return panel_w, panel_h, spacing, total_w
+
     def _draw_static_frame(self, img, text, font, color1, color2, offset_x, offset_y, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         
-        try:
-            left, top, right, bottom = draw.textbbox((0, 0), "00:00:00", font=font)
-        except Exception:
-            left, top, right, bottom = 0, 0, 30, 10
-            
-        text_width = (right - left) * scale_factor
-        text_height = (bottom - top) * scale_factor
-        
-        panel_w = max(4, int(text_width // 8 + 2))
-        panel_h = max(8, int(text_height + 4))
-        spacing = 2
-        total_w = (panel_w * 6) + (spacing * 7) + 4
+        panel_w, panel_h, spacing, total_w = self._get_layout(text, font, scale_factor)
         start_x = (self.config.matrix_width - total_w) // 2 + offset_x
         y_pos = (self.config.matrix_height - panel_h) // 2 + offset_y
         
@@ -58,25 +82,12 @@ class FlipRenderer(BaseRenderer):
         is_flipping = False
         
         for i in range(len(time_chars)):
-            if i < len(self.prev_digits) and time_chars[i] != self.prev_digits[i]:
+            if i >= len(self.prev_digits) or time_chars[i] != self.prev_digits[i]:
                 changed[i] = True
                 is_flipping = True
                 
         if is_flipping:
-            # Re-calculate panel sizes
-            dummy_img = Image.new('RGB', (1, 1))
-            draw = ImageDraw.Draw(dummy_img)
-            try:
-                left, top, right, bottom = draw.textbbox((0, 0), "00:00:00", font=font)
-            except Exception:
-                left, top, right, bottom = 0, 0, 30, 10
-            text_width = (right - left) * scale_factor
-            text_height = (bottom - top) * scale_factor
-            
-            panel_w = max(4, int(text_width // 8 + 2))
-            panel_h = max(8, int(text_height + 4))
-            spacing = 2
-            total_w = (panel_w * 6) + (spacing * 7) + 4
+            panel_w, panel_h, spacing, total_w = self._get_layout(current_text, font, scale_factor)
             start_x = (self.config.matrix_width - total_w) // 2 + offset_x
             y_pos = (self.config.matrix_height - panel_h) // 2 + offset_y
 
