@@ -30,6 +30,8 @@ class SlotMachineClock:
             self.spinning = True
             self.spin_speed = 15.0
             self.target_time = time_str
+        elif not self.spinning:
+            self.current_time = time_str
             
         try:
             bbox = draw.textbbox((0, 0), "00:00", font=font)
