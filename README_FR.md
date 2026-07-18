@@ -76,6 +76,30 @@ L'interface est exactement la même que la version ESP32, offrant les contrôles
 
 ---
 
+## 🕹️ Intégration Recalbox & Batocera (Pixelcade Marquees)
+
+ArcadeMatrix supporte l'affichage dynamique de **marquees façon Pixelcade** lorsque vous sélectionnez ou jouez à un jeu sur votre Recalbox ou Batocera !
+
+Lorsque vous parcourez vos listes de jeux, le Raspberry Pi télécharge **en arrière-plan et en temps réel** les images officielles de Pixelcade depuis GitHub, les met en cache sur votre carte SD et les affiche sur votre matrice LED. Si un jeu n'a pas d'image, il affichera un élégant texte animé en remplacement.
+
+### Installation Automatique (Recommandée)
+Allez dans l'onglet **MQTT** de l'interface web ArcadeMatrix, entrez l'IP de votre Recalbox/Batocera avec son mot de passe root (par défaut `recalboxroot` ou `linux`) et cliquez sur **Install Sync Script**. Cela injectera automatiquement le daemon via SSH.
+
+### Installation Manuelle (Recalbox)
+Si vous préférez le faire manuellement, ou si l'installation réseau échoue :
+1. Ouvrez le fichier `tools/recalbox_setup_mqtt.sh` inclus dans le projet.
+2. Éditez la ligne `MQTT_BROKER="192.168.1.xxx"` et mettez l'IP du Raspberry Pi qui possède la Matrice LED.
+3. Copiez le fichier `tools/recalbox_setup_mqtt.sh` sur votre Recalbox (par exemple dans `/recalbox/share/`).
+4. Connectez-vous à votre Recalbox en SSH et exécutez : `bash /recalbox/share/recalbox_setup_mqtt.sh`.
+
+### Comment fonctionne l'architecture du Daemon ?
+Contrairement aux scripts natifs de Recalbox qui s'exécutent (et bloquent le système) à chaque mouvement de joystick, ArcadeMatrix installe un **Daemon Python ultra-léger en arrière-plan**.
+* **Zéro Lag :** Consomme 0% de CPU. EmulationStation ne subit aucun ralentissement, même en défilant à vitesse maximale.
+* **Anti-Spam (Debounce) :** Si vous faites défiler 50 jeux rapidement, le daemon ne sature pas le réseau. Il n'envoie le message à la matrice que si vous restez sur un jeu pendant plus de 150 millisecondes.
+* **Sécurité Multi-Thread :** Du côté de la matrice LED, les téléchargements et le moteur de dessin sont séparés par des threads avec des verrous (locks) robustes, empêchant les blocages (freeze) et la corruption du cache d'images.
+
+---
+
 ## 🔧 Configuration de la Matrice
 Si vous avez une matrice plus grande que 64x64 ou 128x32, ou si vous utilisez un HAT non-Adafruit, vous devrez peut-être modifier les arguments `hzeller` dans `core/matrix.py`. Par défaut, ils sont définis sur `--led-gpio-mapping=adafruit-hat` et `128x32`.
 

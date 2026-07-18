@@ -76,6 +76,30 @@ The interface is exactly the same as the ESP32 version, offering Dashboard contr
 
 ---
 
+## 🕹️ Recalbox & Batocera Integration (Pixelcade Marquees)
+
+ArcadeMatrix supports dynamic **Pixelcade-style** marquees when you select or play a game on your Recalbox or Batocera!
+
+As you browse your game lists, the Raspberry Pi will download official Pixelcade marquees from GitHub **in the background and in real-time**, cache them on your SD card, and display them on your LED matrix. If a game has no image, it will display an elegant animated text fallback.
+
+### Automatic Installation (Recommended)
+Go to the **MQTT** tab in the ArcadeMatrix Web UI, enter the IP of your Recalbox/Batocera along with its root password (default `recalboxroot` or `linux`), and click **Install Sync Script**. This will automatically inject the daemon via SSH.
+
+### Manual Installation (Recalbox)
+If you prefer manual installation, or if the network install fails:
+1. Open the `tools/recalbox_setup_mqtt.sh` file included in the project.
+2. Edit the line `MQTT_BROKER="192.168.1.xxx"` and set the IP of the Raspberry Pi running the LED Matrix.
+3. Copy the `tools/recalbox_setup_mqtt.sh` file to your Recalbox (e.g., in `/recalbox/share/`).
+4. SSH into your Recalbox and run: `bash /recalbox/share/recalbox_setup_mqtt.sh`.
+
+### How does the Daemon architecture work?
+Unlike native Recalbox scripts that run (and freeze the system) on every joystick movement, ArcadeMatrix installs an **ultra-lightweight Python Daemon in the background**.
+* **Zero Lag:** Consumes 0% CPU. EmulationStation suffers no stutter or lag, even when scrolling at max speed.
+* **Anti-Spam (Debounce):** If you scroll quickly through 50 games, the daemon won't flood the network. It only sends the message to the matrix if you pause on a game for more than 150 milliseconds.
+* **Thread Safety:** On the LED Matrix side, downloads and the drawing engine are separated by threads with robust locks, preventing freezing and image cache corruption.
+
+---
+
 ## 🔧 Matrix Configuration
 If you have a matrix larger than 64x64 or 128x32, or if you are using a non-Adafruit HAT, you may need to tweak the `hzeller` arguments in `core/matrix.py`. By default, it's set to `--led-gpio-mapping=adafruit-hat` and `128x32`.
 
