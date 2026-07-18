@@ -1,7 +1,7 @@
 import time
 from PIL import Image, ImageDraw
 from .base_renderer import BaseRenderer
-from core.utils import draw_styled_text
+from core.theme import draw_styled_text
 
 class FlipRenderer(BaseRenderer):
     def __init__(self, config):
