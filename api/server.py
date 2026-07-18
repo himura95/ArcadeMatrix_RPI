@@ -68,6 +68,9 @@ def api_settings():
             'date_color_2': config.date_color_2,
             'night_mode_enabled': config.standby_enabled,
             'turn_off_at': config.standby_turn_off,
+            'wake_up_at': config.standby_wake_up,
+            'matrix_brightness_night': config.matrix_brightness_night,
+            'matrix_power': getattr(config, 'matrix_power', True),
             "matrix_brightness": config.matrix_brightness,
             "matrix_slowdown": config.matrix_slowdown,
             "matrix_rows": config.matrix_rows,
@@ -79,7 +82,6 @@ def api_settings():
             "matrix_pwm_bits": config.matrix_pwm_bits,
             "matrix_pwm_lsb_nanoseconds": config.matrix_pwm_lsb_nanoseconds,
             "mqtt_enabled": config.mqtt_enabled,
-            'wake_up_at': config.standby_wake_up,
             'mqtt_broker': config.mqtt_broker,
             'mqtt_port': config.mqtt_port,
             'mqtt_user': config.mqtt_user,
@@ -180,6 +182,7 @@ def api_settings():
         if 'night_mode_enabled' in data: config.standby_enabled = bool(data['night_mode_enabled'])
         if 'turn_off_at' in data: config.standby_turn_off = data['turn_off_at']
         if 'wake_up_at' in data: config.standby_wake_up = data['wake_up_at']
+        if 'matrix_brightness_night' in data: config.matrix_brightness_night = int(data['matrix_brightness_night'])
         
         # MQTT
         if 'mqtt_enable' in data: config.mqtt_enabled = bool(data['mqtt_enable'])
@@ -383,6 +386,17 @@ def api_shutdown():
     import subprocess
     subprocess.Popen("sleep 1 && sudo shutdown now", shell=True)
     return jsonify({'status': 'success', 'message': 'Shutting down system...'})
+
+@app.route('/api/system/power', methods=['POST'])
+def api_power():
+    data = request.json
+    if data and 'state' in data:
+        config.matrix_power = bool(data['state'])
+        if not config.matrix_power:
+            if app_instance and app_instance.mw:
+                app_instance.mw.clear()
+        config.reload_flag = True
+    return jsonify({'status': 'success', 'matrix_power': config.matrix_power})
 
 def run_server(port=8080):
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)

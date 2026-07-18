@@ -24,6 +24,9 @@ class Config:
         self.matrix_pwm_bits = 11
         self.matrix_pwm_lsb_nanoseconds = 130
         
+        self.matrix_power = True
+        self.matrix_brightness_night = 10
+        
         # MQTT
         self.mqtt_enabled = False
         self.mqtt_broker = ""
@@ -183,6 +186,7 @@ class Config:
         self.standby_enabled = get_bool('STANDBY', 'NIGHT_MODE_ENABLED', self.standby_enabled)
         self.standby_turn_off = get_str('STANDBY', 'TURN_OFF_AT', self.standby_turn_off)
         self.standby_wake_up = get_str('STANDBY', 'WAKE_UP_AT', self.standby_wake_up)
+        self.matrix_brightness_night = get_int('STANDBY', 'NIGHT_BRIGHTNESS', getattr(self, 'matrix_brightness_night', 10))
 
     def save(self):
         # Update parser object
@@ -252,6 +256,7 @@ class Config:
         self.parser.set('STANDBY', 'NIGHT_MODE_ENABLED', str(self.standby_enabled).lower())
         self.parser.set('STANDBY', 'TURN_OFF_AT', str(self.standby_turn_off))
         self.parser.set('STANDBY', 'WAKE_UP_AT', str(self.standby_wake_up))
+        self.parser.set('STANDBY', 'NIGHT_BRIGHTNESS', str(self.matrix_brightness_night))
 
         with open(self.config_file, 'w') as f:
             self.parser.write(f)

@@ -25,12 +25,49 @@ class RotationManager:
     def start_loop(self):
         logging.info("Starting idle rotation loop...")
         while True:
+            # Check manual power state first
+            if not getattr(self.config, 'matrix_power', True):
+                self.mw.clear()
+                time.sleep(1)
+                continue
+                
+            # Check standby (night mode)
+            is_night = False
+            if self.config.standby_enabled:
+                import datetime
+                now = datetime.datetime.now().time()
+                try:
+                    off_time = datetime.datetime.strptime(self.config.standby_turn_off, "%H:%M").time()
+                    wake_time = datetime.datetime.strptime(self.config.standby_wake_up, "%H:%M").time()
+                    if off_time > wake_time:
+                        is_night = now >= off_time or now < wake_time
+                    else:
+                        is_night = now >= off_time and now < wake_time
+                except Exception as e:
+                    pass
+                    
+            if is_night:
+                if getattr(self.config, 'matrix_brightness_night', 10) == 0:
+                    self.mw.clear()
+                    time.sleep(5)
+                    continue
+                else:
+                    if self.mw.matrix:
+                        self.mw.matrix.brightness = self.config.matrix_brightness_night
+            else:
+                if self.mw.matrix and getattr(self.config, 'matrix_brightness', 50) != self.mw.matrix.brightness:
+                    self.mw.matrix.brightness = self.config.matrix_brightness
+
             rotation_list = self.config.idle_rotation
             if not rotation_list:
                 logging.warning("No rotation configured. Defaulting to clock.")
                 rotation_list = ['clock']
                 
             for engine_name in rotation_list:
+                # Check power state mid-rotation
+                if not getattr(self.config, 'matrix_power', True):
+                    break
+                    
                 # Intercept forced jump
                 if getattr(self.config, 'force_engine', None):
                     engine_name = self.config.force_engine
