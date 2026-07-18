@@ -6,7 +6,7 @@ from core.theme import load_font
 class TrueMatrixRenderer(BaseRenderer):
     def __init__(self, config):
         super().__init__(config)
-        self.matrix_cols = [random.randint(-self.config.matrix_height, 0) for _ in range(0, self.config.matrix_width, 10)]
+        self.matrix_cols = [random.randint(-self.config.matrix_height, -10) for _ in range(0, self.config.matrix_width, 10)]
         self.matrix_img = None
         try:
             self.matrix_font = load_font('DotGothic16.ttf', 12)
@@ -24,7 +24,7 @@ class TrueMatrixRenderer(BaseRenderer):
         draw.fontmode = '1'
         
         for i, y in enumerate(self.matrix_cols):
-            if y >= 0 and y < self.config.matrix_height:
+            if y > -20 and y < self.config.matrix_height:
                 char = chr(random.randint(0x30A0, 0x30FF))
                 draw.text((i * 10, y), char, font=self.matrix_font, fill=(180, 255, 180, 255))
                 if random.random() < 0.2:
@@ -34,7 +34,7 @@ class TrueMatrixRenderer(BaseRenderer):
             
             if self.matrix_cols[i] > self.config.matrix_height:
                 if random.random() < 0.1:
-                    self.matrix_cols[i] = 0
+                    self.matrix_cols[i] = random.randint(-20, -10)
                     
         img.paste(self.matrix_img.convert('RGB'), (0,0))
         
