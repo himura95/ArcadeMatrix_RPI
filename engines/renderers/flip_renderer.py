@@ -43,7 +43,7 @@ class FlipRenderer(BaseRenderer):
             
         return panel_w, panel_h, spacing, total_w
 
-    def _draw_static_frame(self, img, text, font, color1, color2, offset_x, offset_y, scale_factor=1.0):
+    def _draw_static_frame(self, img, text, font, theme_id, color1, color2, offset_x, offset_y, scale_factor=1.0):
         draw = ImageDraw.Draw(img)
         draw.fontmode = '1'
         
@@ -69,9 +69,9 @@ class FlipRenderer(BaseRenderer):
             
         return img
 
-    def render(self, img, text, font, color1, color2, offset_x, offset_y, scale_factor=1.0):
+    def render(self, img, text, font, theme_id, color1, color2, offset_x, offset_y, scale_factor=1.0):
         # We assume prev_digits exists, animation should have happened already
-        return self._draw_static_frame(img, text, font, color1, color2, offset_x, offset_y, scale_factor)
+        return self._draw_static_frame(img, text, font, theme_id, color1, color2, offset_x, offset_y, scale_factor)
 
     def animate(self, mw, prev_text, current_text, font, color1, color2, offset_x, offset_y, scale_factor=1.0):
         if self.prev_digits is None:
