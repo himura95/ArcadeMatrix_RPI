@@ -38,7 +38,7 @@ class FlipRenderer(BaseRenderer):
                 continue
                 
             draw.rectangle([cx, y_pos, cx + panel_w - 1, y_pos + panel_h - 1], fill=(255, 255, 255))
-            draw_styled_text(img, char, (cx + 1, y_pos + 1), font, 19, color1, color2, scale=scale_factor)
+            draw_styled_text(img, char, (cx + 1, y_pos + 1), font, 19, (0,0,0), (0,0,0), scale=scale_factor)
             mid_y = y_pos + panel_h // 2
             draw.line([(cx, mid_y), (cx + panel_w - 1, mid_y)], fill=(0, 0, 0), width=1)
             cx += panel_w + spacing
@@ -109,7 +109,7 @@ class FlipRenderer(BaseRenderer):
                         anim_draw.line([(cx, mid_y), (cx + panel_w - 1, mid_y)], fill=(0, 0, 0), width=1)
                     else:
                         anim_draw.rectangle([cx, y_pos, cx + panel_w - 1, y_pos + panel_h - 1], fill=(255, 255, 255))
-                        draw_styled_text(anim_img, char, (cx + 1, y_pos + 1), font, 19, color1, color2, scale=scale_factor)
+                        draw_styled_text(anim_img, char, (cx + 1, y_pos + 1), font, 19, (0,0,0), (0,0,0), scale=scale_factor)
                         mid_y = y_pos + panel_h // 2
                         anim_draw.line([(cx, mid_y), (cx + panel_w - 1, mid_y)], fill=(0, 0, 0), width=1)
                         

@@ -2,6 +2,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 def hex_to_rgb(hex_str):
+    if isinstance(hex_str, tuple): return hex_str
     hex_str = hex_str.lstrip('#')
     return tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
 
@@ -31,7 +32,7 @@ def get_theme_colors(theme_id, color1_hex="#ffffff", color2_hex="#ffffff"):
     elif theme_id == 16: return (0, 255, 0), (255, 0, 255), False, None # Bub
     elif theme_id == 17: return (0, 255, 0), (0, 0, 0), False, None # Space InvaderClock (Negative Space)
     elif theme_id == 18: return (200, 255, 200), (0, 0, 0), False, None # Cyberpunk
-    elif theme_id == 19: return (0, 0, 0), (0, 0, 0), False, None # Flip Clock (Negative Space)
+    elif theme_id == 19: return hex_to_rgb(color1_hex), (0, 0, 0), False, None # No Shadow / Custom Color
     elif theme_id == 21: return (200, 255, 200), (0, 0, 0), False, None # True Matrix
     elif theme_id == 22: return (255, 255, 255), (0, 0, 0), False, None # Pong Clock
     elif theme_id == 23: return (255, 255, 255), (0, 0, 0), False, None # Tetris Clock

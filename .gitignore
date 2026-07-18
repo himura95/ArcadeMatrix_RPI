@@ -8,6 +8,7 @@ fighters_64/*
 gifs/*
 # Allow the default font to be committed but ignore others
 fonts/*
+!fonts/*.bdf
 !fonts/PressStart2P.ttf
 !fonts/VT323.ttf
 !fonts/DotGothic16.ttf
