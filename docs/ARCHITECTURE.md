@@ -139,7 +139,15 @@ However, PIL (Pillow) does not natively support scaling `.bdf` fonts. Our archit
 
 ---
 
-## 5. RPi vs ESP32 Architecture Differences
+## 5. Power & Standby Management
+
+To extend the lifespan of the LED matrix and reduce energy consumption, ArcadeMatrix includes both manual and scheduled power management features:
+- **Matrix Power Toggle:** Accessible via the UI, toggling the matrix power sets `config.matrix_power = False`. The engines instantly detect this flag, skip rendering frames, and issue a `wrapper.clear()` command to shut off all LEDs while the background processes (API, MQTT) remain active.
+- **Night Mode:** A scheduled cron-like feature that automatically dims the matrix or turns it off entirely (by dropping brightness to 0) between specified `turn_off_at` and `wake_up_at` times.
+
+---
+
+## 6. RPi vs ESP32 Architecture Differences
 
 If you explore the `RetroPixelLED/ArcadeMatrix` repository, you will notice the ESP32 version is written in C++ and has a different architecture.
 
