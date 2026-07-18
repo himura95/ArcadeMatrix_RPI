@@ -91,79 +91,13 @@ fi
             ssh.exec_command(f"chmod +x {script_path}")
             
         else:
-            # Recalbox Daemon
+            # Recalbox Daemon — ultra-lightweight, zero image processing
             daemon_code = f"""import subprocess
 import time
 import os
-import xml.etree.ElementTree as ET
 
 BROKER = "{matrix_ip}"
 TOPIC = "recalbox/system/playing"
-
-def shrink_image(img_path):
-    thumb = "/tmp/am_thumb.png"
-    try:
-        from PIL import Image as PILImage
-        im = PILImage.open(img_path).convert("RGBA")
-        im.thumbnail((128, 64))
-        im.save(thumb, "PNG")
-        return thumb
-    except Exception:
-        pass
-    try:
-        r = subprocess.run(
-            ["ffmpeg", "-y", "-loglevel", "quiet", "-i", img_path,
-             "-vf", "scale=128:-1", thumb],
-            capture_output=True, timeout=3)
-        if r.returncode == 0:
-            return thumb
-    except Exception:
-        pass
-    return img_path
-
-def find_marquee(rom_path, system):
-    if not rom_path:
-        return None
-    rom_dir = os.path.dirname(rom_path)
-    rom_base = os.path.basename(rom_path)
-    game_name = os.path.splitext(rom_base)[0]
-
-    # 1) Parse gamelist.xml for <marquee> or <wheel> tag
-    gamelist = os.path.join(rom_dir, "gamelist.xml")
-    if os.path.exists(gamelist):
-        try:
-            tree = ET.parse(gamelist)
-            for game in tree.getroot().findall("game"):
-                path_node = game.find("path")
-                if path_node is None or not path_node.text:
-                    continue
-                if not path_node.text.endswith(rom_base):
-                    continue
-                # Try marquee first, then wheel
-                for tag in ["marquee", "wheel"]:
-                    node = game.find(tag)
-                    if node is not None and node.text:
-                        rel = node.text
-                        if rel.startswith("./"):
-                            rel = rel[2:]
-                        full = os.path.join(rom_dir, rel)
-                        if os.path.exists(full):
-                            return full
-        except Exception:
-            pass
-
-    # 2) Filesystem search in common marquee/wheel directories
-    for subdir in ["media/marquees", "media/wheels", "media/wheel",
-                    "media/marquee", "downloaded_images"]:
-        d = os.path.join(rom_dir, subdir)
-        if os.path.isdir(d):
-            for fname in os.listdir(d):
-                name_no_ext = os.path.splitext(fname)[0]
-                # Fuzzy match: filename starts with game name
-                if name_no_ext.lower().startswith(game_name.lower()[:10]):
-                    return os.path.join(d, fname)
-
-    return None
 
 def parse_statefile():
     game = None
@@ -171,23 +105,32 @@ def parse_statefile():
     image = None
     state = "browsing"
     try:
-        if os.path.exists("/tmp/es_state.inf"):
-            with open("/tmp/es_state.inf", "r") as f:
-                for line in f:
-                    if line.startswith("GamePath="):
-                        game = line.split("=", 1)[1].strip()
-                    elif line.startswith("SystemId="):
-                        system = line.split("=", 1)[1].strip()
-                    elif line.startswith("ImagePath="):
-                        image = line.split("=", 1)[1].strip()
-                    elif line.startswith("State="):
-                        state = line.split("=", 1)[1].strip()
+        with open("/tmp/es_state.inf", "r") as f:
+            for line in f:
+                if line.startswith("GamePath="):
+                    game = line.split("=", 1)[1].strip()
+                elif line.startswith("SystemId="):
+                    system = line.split("=", 1)[1].strip()
+                elif line.startswith("ImagePath="):
+                    image = line.split("=", 1)[1].strip()
+                elif line.startswith("State="):
+                    state = line.split("=", 1)[1].strip()
     except Exception:
         pass
     return game, system, image, state
 
 def main():
-    print("Daemon started (v4 - marquee/wheel priority)!", flush=True)
+    import socket
+    import sys
+    # Single instance lock: guarantee only one daemon runs at a time
+    lock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        lock_socket.bind(("127.0.0.1", 49132))
+    except socket.error:
+        print("Another daemon is already running, exiting...")
+        sys.exit(1)
+        
+    print("Daemon started (v5 - lightweight)!", flush=True)
     time.sleep(5)
     last_game = None
     last_sent = None
@@ -196,9 +139,9 @@ def main():
 
     while True:
         try:
-            rom_path, system, scraper_img, state = parse_statefile()
+            rom_path, system, img, state = parse_statefile()
             if not rom_path:
-                time.sleep(0.05)
+                time.sleep(0.1)
                 continue
 
             if rom_path != last_game:
@@ -210,38 +153,28 @@ def main():
                 last_sent = rom_path
                 gbase = os.path.splitext(os.path.basename(rom_path))[0]
 
-                if curl_proc and curl_proc.poll() is None:
-                    try:
-                        curl_proc.kill()
-                    except Exception:
-                        pass
-
-                # Priority: marquee/wheel > scraper image > text-only
-                img = find_marquee(rom_path, system)
-                if not img and scraper_img and os.path.exists(scraper_img):
-                    img = scraper_img
-
-                if img:
-                    small = shrink_image(img)
-                    print("Sending: " + small + " (from " + img + ")", flush=True)
-                    curl_proc = subprocess.Popen(
-                        ["curl", "-s", "-X", "POST", "-F",
-                         "image=@" + small,
-                         "http://" + BROKER + ":8080/api/marquee"])
-                else:
-                    print("Sending text: " + gbase, flush=True)
-                    msg = '{{"status": "' + state + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
-                    subprocess.Popen(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg])
+                # Instantly send the game name via MQTT
+                msg = '{{"status": "' + state + '", "game": "' + gbase + '", "system": "' + str(system) + '"}}'
+                try:
+                    subprocess.run(["mosquitto_pub", "-h", BROKER, "-t", TOPIC, "-m", msg], timeout=2, check=False)
+                except subprocess.TimeoutExpired:
+                    pass
         except Exception as e:
             print("Error: " + str(e), flush=True)
 
-        time.sleep(0.05)
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
 """
             launcher_code = """#!/bin/sh
-python3 /recalbox/share/userscripts/arcadematrix_daemon.py > /recalbox/share/userscripts/daemon.log 2>&1 &
+# Only act on boot/startup (or manual run) to prevent spawning duplicates on every game launch
+if [ -z "$1" ] || [ "$1" = "-action" -a "$2" = "start" ]; then
+    # Kill any existing daemon to prevent ghost clones
+    pkill -f arcadematrix_daemon.py || true
+    # Start the fresh daemon
+    python3 /recalbox/share/arcadematrix_daemon.py > /recalbox/share/userscripts/daemon.log 2>&1 &
+fi
 """
             logging.info(f"Creating directory {target_dir}...")
             ssh.exec_command(f"mkdir -p {target_dir}")
@@ -249,12 +182,14 @@ python3 /recalbox/share/userscripts/arcadematrix_daemon.py > /recalbox/share/use
             # Nuclear cleanup: remove ALL old scripts and kill ghost processes
             logging.info("Cleaning up ALL legacy scripts...")
             ssh.exec_command(f"cd {target_dir} && for f in *.sh; do case \"$f\" in 'arcadematrix_launcher(permanent).sh') ;; *) rm -f \"$f\" ;; esac; done")
+            ssh.exec_command(f"rm -f {target_dir}/arcadematrix_daemon.py")
             ssh.exec_command("pkill -f recalbox_mqtt_status || true")
             ssh.exec_command("pkill -f arcadematrix_mqtt || true")
+            ssh.exec_command("pkill -f arcadematrix_daemon.py || true")
             
             sftp = ssh.open_sftp()
             
-            daemon_path = f"{target_dir}/arcadematrix_daemon.py"
+            daemon_path = "/recalbox/share/arcadematrix_daemon.py"
             with sftp.file(daemon_path, "w") as f:
                 f.write(daemon_code)
                 

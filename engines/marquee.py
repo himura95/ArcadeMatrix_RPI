@@ -25,6 +25,14 @@ class MarqueeEngine:
             logging.warning("MarqueeEngine: No image provided in config.")
             return
 
+        # Matrix requires strictly RGB, so if it's RGBA, we paste onto a black background
+        if image.mode == 'RGBA':
+            temp = Image.new('RGB', image.size, (0, 0, 0))
+            temp.paste(image, (0, 0), image)
+            image = temp
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+
         # Fast resizing while maintaining aspect ratio (thumbnail is highly optimized)
         if image.size != (self.config.matrix_width, self.config.matrix_height):
             bg = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), (0, 0, 0))

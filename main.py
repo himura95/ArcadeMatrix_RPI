@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 from core.config import Config
 from core.matrix import MatrixWrapper
 from core.rotation import RotationManager
+from core.dmd_cache import DMDCache
 from api.server import run_server, set_app_instance
 
 # Optional: paho-mqtt for Batocera integration
@@ -32,6 +33,7 @@ class ArcadeMatrixApp:
         self.config = Config()
         self.mw = MatrixWrapper(self.config)
         self.rotation_manager = RotationManager(self.mw, self.config)
+        self.dmd_cache = DMDCache()
         self.mqtt_client = None
 
     def _on_mqtt_message(self, client, userdata, msg):
@@ -41,25 +43,40 @@ class ArcadeMatrixApp:
         import json
         try:
             data = json.loads(payload)
-            if data.get("status") == "playing":
+            status = data.get("status")
+            # Recalbox often sends "browsing" or "selected", let's handle anything with a game name
+            if "game" in data:
                 game_name = data.get("game", "Unknown Game")
                 sys_name = data.get("system", "")
                 
-                text = f"Playing {game_name}"
-                if sys_name:
-                    text += f" [{sys_name}]"
-                
-                # Interrupt current rotation and scroll the game name
+                clean_name = game_name.replace("-", " ").replace("_", " ").title()
+                if len(clean_name) > 10:
+                    clean_name = " " + clean_name + " " # Padding for scroll
+                    
+                # 1. Instantly show the text
                 self.config.message_payload = {
-                    'text': text,
-                    'color': 0xFFFF, # White
-                    'size': 2,
-                    'direction': 'rtl',
-                    'speed': 30,
+                    'text': clean_name,
+                    'color': 0x07FF, # Cyan
+                    'size': 1,
+                    'direction': 'rtl' if len(clean_name) > 8 else 'none',
+                    'speed': 40,
                     'timeoutSeconds': 30
                 }
                 self.config.force_engine = 'message'
                 self.config.reload_flag = True
+
+                # 2. Start background fetch for DMD marquee
+                def on_marquee_ready(img, req_id):
+                    # Only apply if the user hasn't scrolled to another game since
+                    if not self.dmd_cache.is_current(req_id):
+                        return
+                    self.config.image_obj = img
+                    self.config.image_path = None
+                    self.config.force_engine = 'marquee'
+                    self.config.reload_flag = True
+
+                self.dmd_cache.fetch_async(sys_name, game_name, on_marquee_ready)
+
         except Exception as e:
             logging.error(f"Failed to parse MQTT json: {e}")
 
