@@ -76,6 +76,30 @@ La interfaz es exactamente la misma que la versión ESP32, ofreciendo controles 
 
 ---
 
+## 🕹️ Integración Recalbox & Batocera (Pixelcade Marquees)
+
+¡ArcadeMatrix soporta la visualización dinámica de marquesinas (marquees) al estilo **Pixelcade** cuando seleccionas o juegas un juego en tu Recalbox o Batocera!
+
+Al navegar por tus listas de juegos, la Raspberry Pi descargará **en segundo plano y en tiempo real** las imágenes (marquees) oficiales de Pixelcade desde GitHub, las guardará en caché en tu tarjeta SD, y las mostrará en tu matriz LED. Si el juego no tiene imagen, mostrará un elegante texto animado como respaldo.
+
+### Instalación Automática (Recomendada)
+Ve a la pestaña **MQTT** en la Interfaz Web de ArcadeMatrix, introduce la IP de tu Recalbox/Batocera junto con su contraseña root (por defecto `recalboxroot` o `linux`) y haz clic en **Install Sync Script**. Esto inyectará el daemon automáticamente por SSH.
+
+### Instalación Manual (Recalbox)
+Si prefieres hacerlo a mano, o la instalación por red falla:
+1. Abre el archivo `tools/recalbox_setup_mqtt.sh` incluido en el proyecto.
+2. Edita la línea `MQTT_BROKER="192.168.1.xxx"` y pon la IP de la Raspberry Pi que tiene la Matriz LED.
+3. Copia el archivo `tools/recalbox_setup_mqtt.sh` a tu Recalbox (por ejemplo en `/recalbox/share/`).
+4. Conéctate a tu Recalbox por SSH y ejecuta: `bash /recalbox/share/recalbox_setup_mqtt.sh`.
+
+### ¿Cómo funciona la arquitectura del Daemon?
+A diferencia de los scripts nativos de Recalbox que se ejecutan (y bloquean el sistema) en cada movimiento del joystick, ArcadeMatrix instala un **Daemon Python ultra-ligero en segundo plano**.
+* **Zero Lag:** Consume 0% de CPU. EmulationStation no sufre ningún tirón o lentitud, ni siquiera desplazándose a máxima velocidad.
+* **Anti-Spam (Debounce):** Si pasas rápidamente por 50 juegos, el daemon no satura la red. Solo envía el mensaje a la matriz si te detienes en un juego por más de 150 milisegundos.
+* **Seguridad Multi-Hilo:** En el lado de la Matriz LED, las descargas y el motor de dibujo están separados por hilos con bloqueos (locks) robustos, evitando congelamientos y corrupción de la caché de imágenes.
+
+---
+
 ## 🔧 Configuración de la Matriz
 Si tienes una matriz más grande que 64x64 o 128x32, o si estás utilizando un HAT no oficial de Adafruit, es posible que necesites ajustar los argumentos de `hzeller` en `core/matrix.py`. Por defecto, está establecido en `--led-gpio-mapping=adafruit-hat` y `128x32`.
 

@@ -120,6 +120,12 @@ A lightweight Flask server runs on a secondary daemon thread (`api/server.py`).
 - It serves the Vue.js frontend and exposes REST endpoints.
 - **Communication:** The API thread never draws to the matrix directly. Instead, it writes to the shared `Config` object in memory and sets thread-safe flags (e.g., `config.reload_flag = True` or `config.force_engine = "weather"`). The Main Thread detects these flags during its next loop iteration and gracefully aborts/restarts the engine to reflect the new settings.
 
+### The MQTT Thread (Pixelcade Integration)
+A `paho-mqtt` loop runs in its own thread to receive live game events from Recalbox or Batocera.
+- **Asynchronous Fetching:** When a game is selected, the thread instantly sets `force_engine = 'message'` to show fallback text, while simultaneously spawning a transient background thread via `DMDCache` to download the official Pixelcade marquee image from GitHub.
+- **Atomic Caching:** To prevent SD card corruption if multiple downloads race for the same file, the background thread writes to a temporary file (`.tmp.[thread_id]`) and uses `os.rename()` for atomic replacement.
+- **Deadlock Prevention:** The `DMDCache` uses a strict single-acquisition locking model for `self._lock` to assign request IDs. Background threads never execute callbacks while holding the lock, preventing classic reentrant lock deadlocks when the callback updates the Main Thread state.
+
 ---
 
 ## 4. BDF Font Scaling Engine
