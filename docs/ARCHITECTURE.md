@@ -117,7 +117,9 @@ The `rgbmatrix` library relies on highly precise hardware PWM to prevent flicker
 
 ### The Background Thread (Web API)
 A lightweight Flask server runs on a secondary daemon thread (`api/server.py`). 
-- It serves the Vue.js frontend and exposes REST endpoints.
+- It serves the static frontend dashboard (built with Vite, vanilla JS/HTML/CSS - despite an
+  earlier version of this doc, it is **not** Vue.js: verified against the actual bundle in
+  `api/www/assets/`, no Vue runtime signatures present) and exposes REST endpoints.
 - **Communication:** The API thread never draws to the matrix directly. Instead, it writes to the shared `Config` object in memory and sets thread-safe flags (e.g., `config.reload_flag = True` or `config.force_engine = "weather"`). The Main Thread detects these flags during its next loop iteration and gracefully aborts/restarts the engine to reflect the new settings.
 
 ### The MQTT Thread (Pixelcade Integration)
