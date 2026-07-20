@@ -3,7 +3,12 @@ import os
 import logging
 
 class Config:
-    def __init__(self, config_file="data/conf.ini"):
+    # Used as a sentinel in load() to know whether the caller explicitly overrode config_file
+    # (e.g. tests passing a tmp_path) - in which case the cwd-relative "data/conf.ini" auto-detect
+    # below must NOT silently override it (see load()).
+    DEFAULT_CONFIG_FILE = "data/conf.ini"
+
+    def __init__(self, config_file=DEFAULT_CONFIG_FILE):
         self.config_file = config_file
         self.parser = configparser.ConfigParser()
         self.load_defaults()
@@ -13,6 +18,8 @@ class Config:
         self.reload_flag = False
         
         # MATRIX
+        self.matrix_rows = 32
+        self.matrix_cols = 64
         self.matrix_width = 64
         self.matrix_height = 32
         self.matrix_mapping = "regular"
@@ -92,13 +99,30 @@ class Config:
         self.standby_wake_up = "07:00"
 
     def load(self):
-        # Always prefer the data partition's conf.ini if it exists
-        data_conf = os.path.join(os.getcwd(), "data", "conf.ini")
-        if os.path.exists(data_conf):
-            self.config_file = data_conf
-            
+        # Prefer the data partition's conf.ini if it exists - but only when the caller didn't
+        # explicitly pass a different config_file (e.g. tests using an isolated tmp_path). This
+        # auto-detect is a convenience for the real app's default `Config()` call, not something
+        # that should ever override an explicit path (it previously did unconditionally, which
+        # broke test isolation - a real Config() instantiated anywhere earlier in the process,
+        # such as api/server.py's module-level singleton, would silently create/read a shared
+        # "data/conf.ini" in the current working directory and hijack every later Config(path)
+        # call regardless of what path was requested).
+        if self.config_file == self.DEFAULT_CONFIG_FILE:
+            data_conf = os.path.join(os.getcwd(), "data", "conf.ini")
+            if os.path.exists(data_conf):
+                self.config_file = data_conf
+
         if not os.path.exists(self.config_file):
             logging.warning(f"Config file {self.config_file} not found. Using defaults.")
+            # Still generate+persist an API token even on a totally fresh install (no conf.ini
+            # yet) - otherwise api_token stays "" until the first unrelated save() call, and any
+            # save() before that would previously crash anyway (matrix_rows/cols were only ever
+            # set here, not in load_defaults() - now fixed above).
+            if not self.api_token:
+                import secrets
+                self.api_token = secrets.token_hex(16)
+                logging.info("Generated a new API token (see conf.ini [API] TOKEN to enable auth).")
+                self.save()
             return
 
         self.parser.read(self.config_file)
@@ -282,6 +306,11 @@ class Config:
         self.parser.set('STANDBY', 'TURN_OFF_AT', str(self.standby_turn_off))
         self.parser.set('STANDBY', 'WAKE_UP_AT', str(self.standby_wake_up))
         self.parser.set('STANDBY', 'NIGHT_BRIGHTNESS', str(self.matrix_brightness_night))
+
+        # Ensure the parent directory exists (e.g. a fresh install with no "data/" folder yet).
+        parent_dir = os.path.dirname(self.config_file)
+        if parent_dir and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
 
         with open(self.config_file, 'w') as f:
             self.parser.write(f)

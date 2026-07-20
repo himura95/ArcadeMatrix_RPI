@@ -1,11 +1,33 @@
 import time
 import logging
+import datetime
 from engines.clock import ClockEngine
 from engines.date import DateEngine
 from engines.weather import WeatherEngine
 from engines.gif import GifEngine
 from engines.fighter import FighterEngine
 from engines.network import NetworkEngine
+
+
+def is_night_time(now, off_str, wake_str):
+    """Pure helper (no hardware/config dependency, easy to unit test): returns True if `now`
+    (a datetime.time) falls within the [off_str, wake_str) standby/night window, where both
+    strings are "HH:MM" formatted. Handles overnight windows that wrap past midnight (e.g.
+    off_str="23:00", wake_str="07:00") by treating them as off_time > wake_time.
+    Fails safe (returns False, i.e. "not night") if either string is malformed/unparseable,
+    so a config typo never accidentally forces the display into permanent standby.
+    """
+    try:
+        off_time = datetime.datetime.strptime(off_str, "%H:%M").time()
+        wake_time = datetime.datetime.strptime(wake_str, "%H:%M").time()
+    except (ValueError, TypeError):
+        return False
+
+    if off_time > wake_time:
+        return now >= off_time or now < wake_time
+    else:
+        return now >= off_time and now < wake_time
+
 
 class RotationManager:
     def __init__(self, matrix_wrapper, config):
@@ -34,17 +56,8 @@ class RotationManager:
             # Check standby (night mode)
             is_night = False
             if self.config.standby_enabled:
-                import datetime
                 now = datetime.datetime.now().time()
-                try:
-                    off_time = datetime.datetime.strptime(self.config.standby_turn_off, "%H:%M").time()
-                    wake_time = datetime.datetime.strptime(self.config.standby_wake_up, "%H:%M").time()
-                    if off_time > wake_time:
-                        is_night = now >= off_time or now < wake_time
-                    else:
-                        is_night = now >= off_time and now < wake_time
-                except Exception as e:
-                    pass
+                is_night = is_night_time(now, self.config.standby_turn_off, self.config.standby_wake_up)
                     
             if is_night:
                 if getattr(self.config, 'matrix_brightness_night', 10) == 0:

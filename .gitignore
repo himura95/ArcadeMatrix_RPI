@@ -18,6 +18,9 @@ __pycache__/
 *.pyc
 venv/
 
+# Runtime-generated config (created at first boot, contains a random API token - never commit)
+data/
+
 # IDEs
 .idea/
 .vscode/
