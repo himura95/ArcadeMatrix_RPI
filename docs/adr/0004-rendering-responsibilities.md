@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](0004-rendering-responsibilities_FR.md) | 🇪🇸 [Español](0004-rendering-responsibilities_ES.md)
+
 # ADR-0004: Separation of Rendering Responsibilities
 
 ## Status

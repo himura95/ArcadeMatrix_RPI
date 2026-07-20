@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](esp32_FR.md) | 🇪🇸 [Español](esp32_ES.md)
+
 # ESP32 Benchmarks
 
 *Note: Add your benchmarks here following the methodology.*

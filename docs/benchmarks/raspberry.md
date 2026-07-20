@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](raspberry_FR.md) | 🇪🇸 [Español](raspberry_ES.md)
+
 # Raspberry Pi Benchmarks
 
 *Note: Add your benchmarks here following the methodology.*

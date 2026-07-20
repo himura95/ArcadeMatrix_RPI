@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](CONTRIBUTING_FR.md) | 🇪🇸 [Español](CONTRIBUTING_ES.md)
+
 # Contributing to ArcadeMatrix
 
 Welcome to ArcadeMatrix! Whether you're fixing bugs, adding new animations, or bringing ArcadeMatrix to a new platform, we're glad you're here.

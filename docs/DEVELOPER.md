@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](DEVELOPER_FR.md) | 🇪🇸 [Español](DEVELOPER_ES.md)
+
 # Developer Guide
 
 Welcome to the ArcadeMatrix development guide. This document explains the core architecture of the project and provides step-by-step instructions on how to extend it.

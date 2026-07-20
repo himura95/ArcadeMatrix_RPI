@@ -1,9 +1,11 @@
+🇬🇧 English | 🇫🇷 [Français](GETTING_STARTED_FR.md) | 🇪🇸 [Español](GETTING_STARTED_ES.md)
+
 # Getting Started (Raspberry Pi app, developer workspace setup)
 
 This guide is for developers setting up a **local development environment** on their own machine
-(Mac/Linux/Windows) to work on the ArcadeMatrix_RPi codebase - as opposed to `docs/QUICKSTART.md`,
+(Mac/Linux/Windows) to work on the ArcadeMatrix_RPi codebase - as opposed to `QUICKSTART.md`,
 which targets end users flashing a pre-built image onto a Raspberry Pi. For architecture and
-contribution conventions (Engines vs. Renderers), see `docs/DEVELOPER.md` and `CONTRIBUTING.md`.
+contribution conventions (Engines vs. Renderers), see `DEVELOPER.md` and `../CONTRIBUTING.md`.
 
 ## 1. Create a virtual environment
 
@@ -40,7 +42,7 @@ the GPIO pins). This means:
 ## 3. Running the app for real
 
 Actually running the full app requires a Raspberry Pi with the matrix wired per
-`docs/ARCHITECTURE.md`/the HAT vendor's instructions, and `rgbmatrix` compiled/installed
+`ARCHITECTURE.md`/the HAT vendor's instructions, and `rgbmatrix` compiled/installed
 (`install.sh` at the repo root automates this, including the systemd service setup). On the Pi:
 
 ```bash
@@ -78,14 +80,14 @@ identically on your dev machine or in CI:
 python3 -m pytest tests/ -v
 ```
 
-See `docs/DEVELOPER.md`'s "Testing Your Code" section for the project's coverage expectations
-(100% on API routes) and `CONTRIBUTING.md` for what counts as an Engine vs. a Renderer when adding
+See `DEVELOPER.md`'s "Testing Your Code" section for the project's coverage expectations
+(100% on API routes) and `../CONTRIBUTING.md` for what counts as an Engine vs. a Renderer when adding
 new test cases.
 
 ## 6. Building a release image (optional, for maintainers)
 
 If you need to produce a full flashable Raspberry Pi OS image (like the one linked from
-`docs/QUICKSTART.md`), see `scripts/build_image.sh` (macOS/Linux, requires Docker) - it downloads
+`QUICKSTART.md`), see `scripts/build_image.sh` (macOS/Linux, requires Docker) - it downloads
 Raspberry Pi OS Lite, injects this repo, compiles the Python to bytecode to hide source, and
 creates the FAT32/exFAT `DATA` partition end users drop their GIFs/fonts/sprites onto. This is a
 10-15 minute process and not needed for day-to-day feature development - only for cutting a new

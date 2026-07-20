@@ -1,8 +1,8 @@
-🇬🇧 English | 🇫🇷 [Français](history_FR.md) | 🇪🇸 [Español](history_ES.md)
+🇬🇧 [English](history.md) | 🇫🇷 [Français](history_FR.md) | 🇪🇸 Español
 
-# Benchmark History
+# Historial de benchmarks
 
-Use this file to track performance regressions or improvements across versions.
+Usa este archivo para seguir regresiones o mejoras de rendimiento entre versiones.
 
 | Version | Feature Tested | Pi 4 FPS | Pi Zero 2 FPS | ESP32 FPS | Notes |
 |---------|----------------|----------|---------------|-----------|-------|

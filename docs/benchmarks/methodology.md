@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](methodology_FR.md) | 🇪🇸 [Español](methodology_ES.md)
+
 # Benchmark Methodology
 
 This directory tracks the performance of ArcadeMatrix across different hardware generations.

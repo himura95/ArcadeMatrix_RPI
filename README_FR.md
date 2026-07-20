@@ -1,117 +1,127 @@
+🇬🇧 [English](README.md) | 🇫🇷 Français | 🇪🇸 [Español](README_ES.md)
+
 # ArcadeMatrix RPi 🍓👾
 
-Un portage basé sur Python du projet **ArcadeMatrix**, spécialement conçu pour fonctionner sur un **Raspberry Pi** connecté à une matrice LED RGB (HUB75) via le HAT d'Adafruit ou le matériel Joy-IT.
+Un portage Python du projet **ArcadeMatrix**, spécialement conçu pour fonctionner sur un **Raspberry Pi** connecté à une matrice LED RGB (HUB75) via le HAT Adafruit ou le matériel Joy-IT.
 
-Ce projet reproduit les superbes fonctionnalités de la version ESP32 tout en supprimant complètement ses limitations matérielles.
+Ce projet reproduit les excellentes fonctionnalités de la version ESP32 tout en supprimant complètement ses limitations matérielles.
 
----
-
-## 🌟 Fonctionnalités (Exclusivités RPi vs ESP32)
-
-* **Polices chargeables dynamiquement (`.ttf`)** : Fini les polices codées en dur ! Déposez n'importe quelle police `.ttf` ou `.otf` directement dans le dossier `fonts/`, et l'interface Web la listera automatiquement pour l'utiliser sur l'horloge ou la date.
-* **Tailles et décalages d'horloge/date illimités** : Vous n'êtes plus limité aux tailles 1, 2 ou 3. Vous pouvez définir n'importe quelle taille et positionner le texte librement sur des panneaux matriciels massifs (ex: 256x64).
-* **Sélection massive d'horloges** : Profitez d'une variété d'horloges animées comprenant les classiques Arcade, Binaire, Cyberpunk, Flip, Mots, et les toutes nouvelles horloges **Pac-Man**, **Tetris**, **SlotMachine** (Machine à sous) et **Versus (Mugen)** !
-* **Véritable pluie numérique Matrix (Katakana)** : Un effet de pluie numérique Matrix entièrement personnalisé, fluide et authentique (`DotGothic16`) avec des Katakana qui tombent et du texte en espace négatif (LEDs éteintes) qui perfore la pluie.
-* **Dégradés lisses personnalisés** : En plus des thèmes classiques d'éditeurs (Nintendo, Capcom, Sega...), vous pouvez maintenant choisir un thème **Couleur / Dégradé personnalisé** et choisir deux couleurs pour générer un dégradé dynamique.
-* **Listes de lecture d'images dynamiques (GIF/PNG/JPG)** : Lisez de vrais fichiers `.gif` et `.png` de manière dynamique directement depuis le système de fichiers, sans problèmes de fragmentation de la carte SD.
-* **Puissance de Python** : L'intégralité du moteur, de l'API et de l'interface utilisateur est gérée par Python (`Pillow` pour le dessin, `Flask` pour l'API), ce qui permet des modifications beaucoup plus rapides.
+📚 **Documentation développeur :** [Premiers pas (workspace dev)](docs/GETTING_STARTED_FR.md) · [Guide développeur](docs/DEVELOPER_FR.md) · [Architecture](docs/ARCHITECTURE_FR.md) · [Guide rapide (utilisateurs finaux)](docs/QUICKSTART_FR.md)
 
 ---
 
-## 🚀 Matériel Requis
+## 🌟 Fonctionnalités (exclusivités RPi vs ESP32)
 
-1. **Raspberry Pi**: Tout modèle jusqu'au Pi 4 (Zero 2 W, Pi 3, Pi 4).
-   *(⚠️ **Avertissement Pi 5** : La librairie hzeller rgb-led-matrix ne supporte PAS le Pi 5 nativement via GPIO à cause de sa puce RP1. Vous devez utiliser un adaptateur actif pour le Pi 5 ! Les Pi 4 ou Zero 2W sont fortement recommandés).*
-2. **Matrice LED RGB**: Panneaux HUB75 (ex: 64x64, 128x32, 256x64).
-3. **Adafruit RGB Matrix HAT** (ou Joy-IT, ou câblage manuel).
-4. **Carte MicroSD** (16 Go ou plus recommandé pour l'image précompilée).
+* **Polices chargeables dynamiquement (`.ttf`)** : fini les fichiers de police codés en dur ! Déposez n'importe quelle police `.ttf` ou `.otf` directement dans le dossier `fonts/`, et l'interface Web la listera automatiquement pour l'utiliser sur l'horloge ou la date.
+* **Tailles et décalages d'horloge/date illimités** : vous n'êtes plus limité aux tailles 1, 2 ou 3. Vous pouvez définir n'importe quelle taille et positionner librement le texte sur d'immenses panneaux matriciels (ex. 256x64).
+* **Sélection massive d'horloges** : profitez d'une variété d'horloges animées comprenant les classiques Arcade, Binary, Cyberpunk, Flip, Word, ainsi que les toutes nouvelles horloges **Pac-Man**, **Tetris**, **SlotMachine** et **Versus (Mugen)** !
+* **Véritable pluie numérique Matrix (Katakana)** : un effet Matrix entièrement personnalisé, ultra fluide et authentique (`DotGothic16`) avec des Katakana demi-largeur qui tombent et un texte en espace négatif d'« LED éteintes » qui perce la pluie.
+* **Dégradés fluides personnalisés** : en plus des thèmes classiques Publisher (Nintendo, Capcom, Sega...), vous pouvez désormais choisir un thème **Custom Color / Gradient** et sélectionner deux couleurs pour générer un dégradé dynamique.
+* **Playlists d'images dynamiques (GIF/PNG/JPG)** : lisez de vrais fichiers `.gif` et `.png` dynamiquement directement depuis le système de fichiers, sans problèmes de fragmentation de carte SD.
+* **La puissance de Python** : l'intégralité du moteur, de l'API et du frontend est servie par Python (`Pillow` pour le dessin, `Flask` pour l'API), ce qui permet des modifications bien plus rapides.
 
 ---
 
-## 💾 Installation & Configuration
+## 🚀 Prérequis matériels
 
-### Option 1 : Image Précompilée (Recommandée pour les testeurs)
-Nous fournissons un fichier `.img` précompilé et entièrement automatisé (`ArcadeMatrix_Release.img`).
+1. **Raspberry Pi** : n'importe quel modèle jusqu'au Pi 4 (Zero 2 W, Pi 3, Pi 4). 
+   *(⚠️ **Avertissement Pi 5** : la bibliothèque hzeller rgb-led-matrix ne prend PAS en charge nativement le Pi 5 via GPIO à cause de la nouvelle puce RP1. Vous devez utiliser une carte adaptatrice active pour Pi 5 ! Pi 4 ou Zero 2W sont fortement recommandés.)*
+2. **Matrice LED RGB** : panneaux HUB75 (ex. 64x64, 128x32, 256x64).
+3. **Adafruit RGB Matrix HAT** (ou Joy-IT, ou câblage personnalisé).
+4. **Carte MicroSD** (16 Go ou plus recommandés pour l'image précompilée).
+
+---
+
+## 💾 Installation & configuration
+
+### Option 1 : image précompilée (recommandée pour les utilisateurs)
+Nous fournissons un fichier `.img` précompilé et entièrement automatisé, construit et publié automatiquement par la CI
+à chaque release taggée (voir `.github/workflows/release.yml` — conditionné au passage préalable de toute la suite pytest).
+
+**[⬇️ Télécharger la dernière image](https://github.com/red77290/ArcadeMatrix_RPI/releases/latest/download/ArcadeMatrix_Release.img.xz)**
+(`.img.xz` — décompressez avec 7-Zip/Keka/`xz -d` avant le flash. Voir la
+[liste complète des releases](https://github.com/red77290/ArcadeMatrix_RPI/releases) pour les anciennes versions.)
+
 1. Flashez le `.img` sur votre carte SD avec **Raspberry Pi Imager**.
-2. Une fois fait, insérez la carte SD dans votre PC/Mac. Vous verrez apparaître une grosse clé USB de **8 Go nommée DATA** !
-3. Ouvrez le fichier `conf.ini` situé sur ce lecteur DATA pour configurer la taille de votre Matrice et vos identifiants **Wi-Fi** (`SSID` et `PASS`).
-4. Mettez la carte SD dans votre Raspberry Pi et allumez-le.
-5. La matrice s'allumera immédiatement et **affichera son adresse IP** pendant 5 secondes. Utilisez cette IP pour accéder à l'interface Web !
+2. Une fois le flash terminé, insérez la carte SD dans votre PC/Mac. Vous verrez apparaître un grand lecteur USB **DATA** de 8 Go !
+3. Ouvrez le fichier `conf.ini` situé sur ce lecteur DATA pour configurer la taille de votre matrice et vos identifiants **Wi-Fi** (`SSID` et `PASS`).
+4. Insérez la carte SD dans votre Raspberry Pi et allumez-le.
+5. La matrice s'allumera immédiatement et **affichera l'adresse IP** pendant 5 secondes. Utilisez cette IP pour accéder à l'interface Web !
 
-### Option 2 : Installation Manuelle
+### Option 2 : installation manuelle
 Si vous préférez l'installer manuellement sur un **Raspberry Pi OS Lite (64-bit)** fraîchement installé :
-Une fois connecté à votre Raspberry Pi via SSH :
+Une fois connecté à votre Raspberry Pi en SSH :
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/red77290/ArcadeMatrix_RPI/main/install.sh | bash
 ```
+*(Si le dépôt est privé, vous devrez d'abord faire le `git clone` manuellement puis exécuter `./install.sh` depuis le dossier.)*
 
 Le script va automatiquement :
 1. Installer Python 3, Flask, Pillow et `build-essential`.
 2. Télécharger et compiler le pilote `hzeller/rpi-rgb-led-matrix`.
-3. Désactiver l'audio intégré pour éviter les scintillements (flicker) de la matrice.
-4. Configurer `systemd` pour démarrer automatiquement ArcadeMatrix au démarrage.
+3. Configurer `systemd` pour démarrer automatiquement ArcadeMatrix au boot.
 
 ---
 
-## 🎨 Gestion des Médias
+## 🎨 Gestion des médias
 
-L'image précompilée dispose d'une **partition DATA de 8 Go** formatée en exFAT. Cela signifie que vous pouvez brancher votre carte SD directement sur votre PC ou Mac pour glisser-déposer vos fichiers sans avoir besoin de SSH ou FTP !
+L'image précompilée inclut une **partition DATA dédiée de 8 Go** formatée en exFAT. Cela signifie que vous pouvez brancher directement votre carte SD sur votre ordinateur Windows ou Mac pour glisser-déposer vos fichiers sans avoir besoin de SSH ni de FTP !
 
 ### Sprites & GIFs
-* **`/fighters_32/`** ou **`/fighters_64/`** : Mettez vos sprites `.fgt` ici (Voir section Sprites MUGEN plus bas).
-* **`/gifs/`** : Placez vos boucles `.gif` dans des dossiers à l'intérieur.
-L'Interface Web scannera automatiquement ces dossiers et vous permettra de cocher ceux que vous voulez lire !
+* **`/fighters_32/`** ou **`/fighters_64/`** : placez ici vos sprites `.fgt` (voir la section Sprites MUGEN ci-dessous).
+* **`/gifs/`** : déposez vos boucles `.gif` dans des dossiers à l'intérieur.
+L'interface Web analysera automatiquement ces dossiers et vous permettra de cocher ceux que vous voulez lire !
 
-### Polices (Fonts)
-* **`/fonts/`** : Placez vos fichiers `.ttf`, `.otf`, ou `.bdf` ici.
-Par défaut, le projet est livré avec `PressStart2P.ttf`, `VT323.ttf`, et `DotGothic16.ttf`.
+### Fonts
+* **`/fonts/`** : déposez ici vos fichiers `.ttf`, `.otf` ou `.bdf`. 
+Par défaut, le projet est livré avec `PressStart2P.ttf`, `VT323.ttf` et `DotGothic16.ttf`.
 
 ---
 
-## 🕸️ Interface Web (Web UI)
-Naviguez vers `http://<IP_DE_VOTRE_PI>:8080/` pour accéder au panneau de contrôle.
+## 🕸️ Interface Web
+Naviguez vers `http://<YOUR_PI_IP>:8080/` pour accéder au panneau de contrôle.
 
-L'interface est exactement la même que la version ESP32, offrant les contrôles du tableau de bord, la sélection des listes de lecture, la configuration de l'horloge et les paramètres MQTT, avec des contrôles supplémentaires pour les **Dégradés** et les **Tailles illimitées**.
+L'interface est exactement la même que sur la version ESP32, avec les contrôles du Dashboard, la sélection de Playlist, la configuration de l'horloge et les paramètres MQTT, ainsi que des contrôles supplémentaires pour les **Gradients** et les **Unlimited Sizes**.
 
 ---
 
 ## 🕹️ Intégration Recalbox & Batocera (Pixelcade Marquees)
 
-ArcadeMatrix supporte l'affichage dynamique de **marquees façon Pixelcade** lorsque vous sélectionnez ou jouez à un jeu sur votre Recalbox ou Batocera !
+ArcadeMatrix prend en charge les marquees dynamiques **style Pixelcade** lorsque vous sélectionnez ou lancez un jeu sur votre Recalbox ou Batocera !
 
-Lorsque vous parcourez vos listes de jeux, le Raspberry Pi télécharge **en arrière-plan et en temps réel** les images officielles de Pixelcade depuis GitHub, les met en cache sur votre carte SD et les affiche sur votre matrice LED. Si un jeu n'a pas d'image, il affichera un élégant texte animé en remplacement.
+Quand vous parcourez vos listes de jeux, le Raspberry Pi télécharge les marquees officielles Pixelcade depuis GitHub **en arrière-plan et en temps réel**, les met en cache sur votre carte SD et les affiche sur votre matrice LED. Si un jeu n'a pas d'image, il affichera un élégant texte animé de repli.
 
-### Installation Automatique (Recommandée)
-Allez dans l'onglet **MQTT** de l'interface web ArcadeMatrix, entrez l'IP de votre Recalbox/Batocera avec son mot de passe root (par défaut `recalboxroot` ou `linux`) et cliquez sur **Install Sync Script**. Cela injectera automatiquement le daemon via SSH.
+### Installation automatique (recommandée)
+Allez dans l'onglet **MQTT** de l'interface Web ArcadeMatrix, saisissez l'IP de votre Recalbox/Batocera ainsi que son mot de passe root (par défaut `recalboxroot` ou `linux`) et cliquez sur **Install Sync Script**. Cela injectera automatiquement le daemon via SSH.
 
-### Installation Manuelle (Recalbox)
-Si vous préférez le faire manuellement, ou si l'installation réseau échoue :
+### Installation manuelle (Recalbox)
+Si vous préférez l'installation manuelle, ou si l'installation réseau échoue :
 1. Ouvrez le fichier `tools/recalbox_setup_mqtt.sh` inclus dans le projet.
-2. Éditez la ligne `MQTT_BROKER="192.168.1.xxx"` et mettez l'IP du Raspberry Pi qui possède la Matrice LED.
-3. Copiez le fichier `tools/recalbox_setup_mqtt.sh` sur votre Recalbox (par exemple dans `/recalbox/share/`).
-4. Connectez-vous à votre Recalbox en SSH et exécutez : `bash /recalbox/share/recalbox_setup_mqtt.sh`.
+2. Modifiez la ligne `MQTT_BROKER="192.168.1.xxx"` et définissez l'IP du Raspberry Pi qui fait tourner la matrice LED.
+3. Copiez le fichier `tools/recalbox_setup_mqtt.sh` vers votre Recalbox (par ex. dans `/recalbox/share/`).
+4. Connectez-vous en SSH à votre Recalbox et exécutez : `bash /recalbox/share/recalbox_setup_mqtt.sh`.
 
-### Comment fonctionne l'architecture du Daemon ?
-Contrairement aux scripts natifs de Recalbox qui s'exécutent (et bloquent le système) à chaque mouvement de joystick, ArcadeMatrix installe un **Daemon Python ultra-léger en arrière-plan**.
-* **Zéro Lag :** Consomme 0% de CPU. EmulationStation ne subit aucun ralentissement, même en défilant à vitesse maximale.
-* **Anti-Spam (Debounce) :** Si vous faites défiler 50 jeux rapidement, le daemon ne sature pas le réseau. Il n'envoie le message à la matrice que si vous restez sur un jeu pendant plus de 150 millisecondes.
-* **Sécurité Multi-Thread :** Du côté de la matrice LED, les téléchargements et le moteur de dessin sont séparés par des threads avec des verrous (locks) robustes, empêchant les blocages (freeze) et la corruption du cache d'images.
-
----
-
-## 🔧 Configuration de la Matrice
-Si vous avez une matrice plus grande que 64x64 ou 128x32, ou si vous utilisez un HAT non-Adafruit, vous devrez peut-être modifier les arguments `hzeller` dans `core/matrix.py`. Par défaut, ils sont définis sur `--led-gpio-mapping=adafruit-hat` et `128x32`.
-
-Vous pouvez également modifier la luminosité de la matrice de manière dynamique via les paramètres de l'interface Web.
-- Activez les modes Veille/Nuit.
+### Comment fonctionne l'architecture du daemon ?
+Contrairement aux scripts natifs Recalbox qui s'exécutent (et figent le système) à chaque mouvement de joystick, ArcadeMatrix installe **un daemon Python ultra-léger en arrière-plan**.
+* **Zéro lag :** consomme 0 % de CPU. EmulationStation ne subit aucun stutter ni lag, même en défilant à vitesse maximale.
+* **Anti-spam (debounce) :** si vous parcourez rapidement 50 jeux, le daemon n'inondera pas le réseau. Il n'envoie le message à la matrice que si vous restez sur un jeu plus de 150 millisecondes.
+* **Thread safety :** côté matrice LED, les téléchargements et le moteur de dessin sont séparés par des threads avec des verrous robustes, empêchant les gels et la corruption du cache d'images.
 
 ---
 
-## 📂 Gestion des médias avancés (Sprites MUGEN)
+## 🔧 Configuration de la matrice
+Si vous avez une matrice plus grande que 64x64 ou 128x32, ou si vous utilisez un HAT non Adafruit, vous devrez peut-être ajuster les arguments `hzeller` dans `core/matrix.py`. Par défaut, c'est réglé sur `--led-gpio-mapping=adafruit-hat` et `128x32`.
+
+Vous pouvez aussi modifier la luminosité de la matrice dynamiquement via les paramètres de l'interface Web.
+- Activez les modes Standby/Night.
+
+---
+
+## 📂 Gestion des médias (GIFs et sprites MUGEN)
 
 ### Ajouter des GIFs
-Déposez simplement vos fichiers `.gif` standards dans le dossier `gifs/` :
+Déposez simplement n'importe quels fichiers `.gif` standards dans le répertoire `gifs/` :
 ```text
 ArcadeMatrix_RPi/
 └── gifs/
@@ -120,67 +130,73 @@ ArcadeMatrix_RPi/
     └── ...
 ```
 
-### Ajouter des Sprites MUGEN
-Afin d'obtenir une performance parfaite à 60fps et des alignements exacts de "sol virtuel" (virtual ground) sur des rosters de personnages massifs, le moteur Fighter utilise des fichiers `.fgt` pré-traités accompagnés d'un manifeste `index.txt`.
+### Ajouter des sprites MUGEN
+Pour obtenir des performances parfaites à 60fps et des alignements exacts de « virtual ground » sur d'immenses rosters de personnages, le moteur Fighter utilise des fichiers `.fgt` prétraités accompagnés d'un manifeste `index.txt`.
 
 **Vous ne pouvez pas simplement déposer des images brutes dans les dossiers fighters !**
 Vous DEVEZ utiliser l'outil `mugen_extractor.py` fourni dans le dossier `tools/mugen_extractor/` pour traiter vos personnages MUGEN. 
 
-L'extracteur lira les fichiers `.sff` et `.air` de MUGEN, calculera les boîtes de collision (bounding boxes) parfaites pour éviter les tremblements d'animation, et exportera des fichiers `.fgt` optimisés directement dans vos dossiers `fighters_32/` et `fighters_64/`.
+L'extracteur lira les fichiers `.sff` et `.air` de MUGEN, calculera les bounding boxes parfaites pour éviter le jitter des animations, et exportera des fichiers `.fgt` optimisés directement dans vos dossiers `fighters_32/` et `fighters_64/`.
 
 Veuillez consulter `tools/mugen_extractor/README_FR.md` pour les instructions complètes sur l'ajout de nouveaux personnages MUGEN !
 
 ---
 
-## ⚙️ Configuration Avancée (conf.ini)
+## ⚙️ Configuration avancée (conf.ini)
 
-Si vous préférez configurer la matrice manuellement plutôt que via l'interface Web, vous pouvez éditer le fichier `conf.ini` situé sur la partition **DATA** de votre carte SD.
-C'est particulièrement utile pour renseigner vos identifiants Wi-Fi avant le premier démarrage.
+Si vous préférez éditer les réglages manuellement au lieu d'utiliser l'interface Web, vous pouvez modifier directement le fichier `conf.ini` situé sur la partition **DATA** de votre carte SD. 
+C'est particulièrement utile pour configurer le Wi-Fi avant le premier démarrage.
 
 ### 🌐 [WIFI]
-| Paramètre | Défaut | Description |
+| Parameter | Default | Description |
 |---|---|---|
-| `SSID` | `YourNetworkName` | Le nom de votre réseau Wi-Fi. |
-| `PASS` | `YourNetworkPassword` | Le mot de passe de votre réseau. |
-| `CONFIGURED` | `false` | Mettez sur `false` pour forcer le Raspberry Pi à se connecter au prochain démarrage. Remis automatiquement à `true` en cas de succès. |
+| `SSID` | `YourNetworkName` | The name of your Wi-Fi network. |
+| `PASS` | `YourNetworkPassword` | The password for your Wi-Fi network. |
+| `CONFIGURED` | `false` | Set to `false` to force the Raspberry Pi to attempt a Wi-Fi connection on its next boot. Automatically sets back to `true` on success. |
 
 ### 🎛️ [MATRIX]
-| Paramètre | Défaut | Description |
+| Parameter | Default | Description |
 |---|---|---|
-| `ROWS` / `COLS` | `32` / `64` | Les dimensions en pixels d'un seul panneau LED. |
-| `HARDWARE_MAPPING` | `adafruit-hat` | Type de câblage utilisé. (`adafruit-hat`, `adafruit-hat-pwm`, `regular-pi1`, `regular`). |
-| `CHAIN` / `PARALLEL` | `1` / `1` | `CHAIN` pour chainer horizontalement. `PARALLEL` pour empiler verticalement sur plusieurs ports HUB75. |
-| `SLOWDOWN` | `2` | Ralentissement matériel (1 à 4). Augmentez si votre matrice clignote ou glitch (surtout Pi 3/4). |
-| `BRIGHTNESS` | `100` | Luminosité globale de la matrice (1 à 100). |
-| `RGB_SEQUENCE` | `RGB` | Ordre des couleurs. Modifiez en `RBG` ou `BGR` si vos couleurs sont inversées. |
+| `ROWS` / `COLS` | `32` / `64` | The pixel dimensions of a single LED panel. |
+| `HARDWARE_MAPPING` | `adafruit-hat` | Type of HAT/wiring used. (`adafruit-hat`, `adafruit-hat-pwm`, `regular-pi1`, `regular`). |
+| `CHAIN` / `PARALLEL` | `1` / `1` | `CHAIN` for horizontal daisy-chaining. `PARALLEL` for vertical stacking on multiple HUB75 ports. |
+| `SLOWDOWN` | `2` | Hardware slowdown (1 to 4). Increase if your Matrix has flickering or visual artifacts (especially Pi 3/4). |
+| `BRIGHTNESS` | `100` | Global matrix brightness (1 to 100). |
+| `RGB_SEQUENCE` | `RGB` | Color order. Change to `RBG` or `BGR` if your colors look swapped. |
 
 ### ⏰ [TIME] & [DATE]
-| Paramètre | Défaut | Description |
+| Parameter | Default | Description |
 |---|---|---|
-| `FORMAT_24H` | `true` | `true` pour le format 24h, `false` pour le format AM/PM (12h). |
-| `CLOCK_FONT` | `DotGothic16.ttf`| Nom du fichier `.ttf` ou `.bdf` situé dans `/fonts/`. |
-| `CLOCK_SIZE` | `16` | Taille de la police (facteur d'échelle) pour l'horloge. |
-| `THEME` | `0` | L'identifiant numérique du thème d'horloge (ex: 19 pour Flip, 21 pour True Matrix). |
-| `CLOCK_COLOR_1` | `#ffffff` | Couleur hexadécimale primaire. Utilisée pour les dégradés si le thème est Custom (20). |
-| `CLOCK_COLOR_2` | `#ffffff` | Couleur hexadécimale secondaire. |
+| `FORMAT_24H` | `true` | `true` for 24-hour format, `false` for 12-hour AM/PM format. |
+| `CLOCK_FONT` | `DotGothic16.ttf`| Name of the `.ttf` or `.bdf` file in the `/fonts/` folder to use for the clock. |
+| `CLOCK_SIZE` | `16` | Font size (scaling factor) for the clock. |
+| `THEME` | `0` | The numeric ID of the animated clock theme (e.g. 19 for Flip, 21 for True Matrix). |
+| `CLOCK_COLOR_1` | `#ffffff` | Primary hex color. Used for gradients if theme is Custom (20). |
+| `CLOCK_COLOR_2` | `#ffffff` | Secondary hex color. Used for gradients if theme is Custom (20). |
 
-*(La section `[DATE]` contient des paramètres identiques pour configurer l'affichage de la date).*
+*(La section `[DATE]` contient des paramètres identiques pour configurer l'affichage de la date.)*
 
 ### 🔄 [IDLE]
-| Paramètre | Défaut | Description |
+| Parameter | Default | Description |
 |---|---|---|
-| `ROTATION` | `all` | Dicte la règle de rotation (`clock`, `gifs`, `sprites`, ou `all`). |
-| `CLOCK_DURATION_SEC`| `10` | Temps d'affichage de l'horloge/date pendant la boucle. |
-| `GIF_DURATION_SEC` | `10` | Temps d'affichage d'un seul GIF avant de passer au suivant. |
-| `SELECTED_GIFS` | *(vide)* | Liste séparée par des virgules pour boucler certains médias. Laissez vide pour tout jouer. |
-| `SELECTED_SPRITES` | *(vide)* | Liste séparée par des virgules pour boucler certains sprites. Laissez vide pour tout jouer. |
+| `ROTATION` | `all` | Dictates rotation behavior (`clock`, `gifs`, `sprites`, or `all`). |
+| `CLOCK_DURATION_SEC`| `10` | How long the clock/date stays on screen during the rotation loop. |
+| `GIF_DURATION_SEC` | `10` | How long a single GIF stays on screen before advancing. |
+| `SELECTED_GIFS` | *(empty)* | Comma-separated list of media to loop. Leave empty to play everything. |
+| `SELECTED_SPRITES` | *(empty)* | Comma-separated list of sprites to loop. Leave empty to play everything. |
 
 ### 🌙 [STANDBY]
-| Paramètre | Défaut | Description |
+| Parameter | Default | Description |
 |---|---|---|
-| `NIGHT_MODE_ENABLED`| `false` | Si `true`, la matrice s'éteindra et se rallumera automatiquement. |
-| `TURN_OFF_AT` | `23:00` | Heure formatée en HH:MM pour la mise en veille. |
-| `WAKE_UP_AT` | `07:00` | Heure formatée en HH:MM pour le réveil. |
+| `NIGHT_MODE_ENABLED`| `false` | If `true`, the Matrix will automatically turn off and wake up. |
+| `TURN_OFF_AT` | `23:00` | HH:MM formatted time for screen sleep. |
+| `WAKE_UP_AT` | `07:00` | HH:MM formatted time for screen wake. |
+
+### 🔒 [API]
+| Parameter | Default | Description |
+|---|---|---|
+| `AUTH_ENABLED` | `false` | If `true`, requires the `X-API-Token` header to match `TOKEN` on the sensitive endpoints: `/api/wifi`, `/api/mqtt/install`, `/api/system/reboot`, `/api/system/shutdown`. Disabled by default so the bundled Web UI keeps working out of the box; enable it if the device is reachable beyond a trusted LAN. |
+| `TOKEN` | *(auto-generated)* | A random token generated on first boot. Copy it here (or read it from `conf.ini` after first run) and send it as `X-API-Token` when calling protected endpoints. |
 
 ## 📜 Licence
-Ce projet est open-source. Profitez de votre horloge d'arcade rétro ultime !
+Ce projet est open-source. Profitez de votre horloge rétro arcade ultime !

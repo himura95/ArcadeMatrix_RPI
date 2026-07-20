@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](QUICKSTART_FR.md) | 🇪🇸 [Español](QUICKSTART_ES.md)
+
 # Quickstart Guide
 
 This guide will help you install and configure ArcadeMatrix on your Raspberry Pi.

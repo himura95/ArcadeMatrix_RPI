@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](ARCHITECTURE_FR.md) | 🇪🇸 [Español](ARCHITECTURE_ES.md)
+
 # Architecture Overview
 
 This document provides a comprehensive overview of the ArcadeMatrix architecture on the Raspberry Pi. It explains the core design decisions, the rendering pipeline, threading models, and the project's overall philosophy.
