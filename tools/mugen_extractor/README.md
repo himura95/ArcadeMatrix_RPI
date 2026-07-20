@@ -1,3 +1,5 @@
+🇬🇧 English | 🇫🇷 [Français](README_FR.md) | 🇪🇸 [Español](README_ES.md)
+
 # ArcadeMatrix MUGEN Sprite Extractor
 
 This Python script (`mugen_extractor.py`) is custom-designed to extract, optimize, and convert fighting game characters from the **MUGEN** engine to make them compatible with ArcadeMatrix's `FighterEngine` (both ESP32 C++ and Raspberry Pi Python versions).
@@ -43,24 +45,25 @@ Example:
 
 ## How to use it
 
-In the `mugen_extractor.py` script, scroll down to the very bottom to the `if __name__ == "__main__":` section and modify the paths according to your setup:
-
-```python
-if __name__ == "__main__":
-    # 1. Folder containing MUGEN characters
-    src_dir = "/Path/To/Your/Mugen/chars"
-    
-    # 2. Destination folders and target heights (TARGET_HEIGHT)
-    out_dirs = [
-        ("./fighters_32", 32), # For P64x32 matrix
-        ("./fighters_64", 64)  # For P128x64 or P64x64 matrix
-    ]
-```
-
-Then run the script:
+Run the script with command-line arguments - no need to edit any code:
 
 ```bash
-python mugen_extractor.py
+python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_32
+```
+
+Options:
+| Flag | Default | Purpose |
+|---|---|---|
+| `--src` | *(required)* | Folder containing your MUGEN character subfolders. |
+| `--dest` | `./fighters_32` | Output folder for the generated `.fgt` files + `index.json`/`index.txt`. |
+| `--mode` | `FULLSIZE` | `SCALED` resizes characters to fit the panel height exactly (standard ESP32, no PSRAM); `FULLSIZE` keeps 1:1 scale (recommended on RPi, which has no such memory constraint). |
+| `--compress` | off | Gzip the output `.fgt` files (`.fgt.gz`) to save disk space. |
+
+To target both a 32px and a 64px matrix, just run it twice with different `--dest` folders:
+
+```bash
+python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_32
+python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_64
 ```
 
 ### Extraction Process
