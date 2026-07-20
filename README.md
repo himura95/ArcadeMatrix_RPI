@@ -4,6 +4,8 @@ A Python-based port of the **ArcadeMatrix** project, specifically designed to ru
 
 This project replicates the awesome features of the ESP32 version while completely removing its hardware limitations.
 
+📚 **Developer docs:** [Getting Started (dev workspace)](docs/GETTING_STARTED.md) · [Developer Guide](docs/DEVELOPER.md) · [Architecture](docs/ARCHITECTURE.md) · [Quickstart (end users)](docs/QUICKSTART.md)
+
 ---
 
 ## 🌟 Features (RPi Exclusives vs ESP32)
