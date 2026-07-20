@@ -33,7 +33,14 @@ This project replicates the awesome features of the ESP32 version while complete
 ## 💾 Installation & Setup
 
 ### Option 1: Pre-compiled Image (Recommended for Users)
-We provide a pre-compiled, fully automated `.img` file (`ArcadeMatrix_Release.img`). 
+We provide a pre-compiled, fully automated `.img` file, built and published automatically by CI
+on every tagged release (see `.github/workflows/release.yml` - gated on the full pytest suite
+passing first).
+
+**[⬇️ Download the latest image](https://github.com/red77290/ArcadeMatrix_RPI/releases/latest/download/ArcadeMatrix_Release.img.xz)**
+(`.img.xz` - decompress with 7-Zip/Keka/`xz -d` before flashing. See the
+[full release list](https://github.com/red77290/ArcadeMatrix_RPI/releases) for older versions.)
+
 1. Flash the `.img` to your SD card using **Raspberry Pi Imager**.
 2. Once flashed, insert the SD card into your PC/Mac. You will see a large 8GB **DATA** USB drive appear!
 3. Open the `conf.ini` file located on this DATA drive to configure your Matrix size and your **Wi-Fi** credentials (`SSID` and `PASS`).
