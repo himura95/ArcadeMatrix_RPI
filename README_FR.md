@@ -199,4 +199,6 @@ C'est particulièrement utile pour configurer le Wi-Fi avant le premier démarra
 | `TOKEN` | *(auto-generated)* | A random token generated on first boot. Copy it here (or read it from `conf.ini` after first run) and send it as `X-API-Token` when calling protected endpoints. |
 
 ## 📜 Licence
-Ce projet est open-source. Profitez de votre horloge rétro arcade ultime !
+Ce projet est publié sous la **[PolyForm Noncommercial License 1.0.0](LICENSE)**.
+
+**En résumé :** vous êtes libre d'utiliser, modifier et partager ce projet pour tout usage non-commercial (usage personnel, projet hobbyiste, recherche, éducation, organismes publics/à but non lucratif) - voir le fichier [LICENSE](LICENSE) complet pour les termes exacts. **Tout usage commercial (vente d'unités assemblées, de kits, ou de produits/services dérivés) nécessite une licence séparée - contactez [Red1L](https://github.com/red77290) pour discuter des conditions commerciales.**

@@ -200,4 +200,6 @@ This is especially useful for setting up Wi-Fi before the first boot.
 | `TOKEN` | *(auto-generated)* | A random token generated on first boot. Copy it here (or read it from `conf.ini` after first run) and send it as `X-API-Token` when calling protected endpoints. |
 
 ## 📜 License
-This project is open-source. Enjoy your Ultimate Retro Arcade Clock!
+This project is licensed under the **[PolyForm Noncommercial License 1.0.0](LICENSE)**.
+
+**In short:** you're free to use, modify, and share this project for any noncommercial purpose (personal use, hobby builds, research, education, non-profit/public institutions) - see the full [LICENSE](LICENSE) file for the exact terms. **Any commercial use (selling assembled units, kits, or derived products/services) requires a separate license - contact [Red1L](https://github.com/red77290) to discuss commercial terms.**
