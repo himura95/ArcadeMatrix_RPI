@@ -42,6 +42,12 @@ class Config:
         self.wifi_pass = ""
         self.wifi_configured = False
 
+        # API (opt-in auth token for sensitive endpoints: reboot/shutdown/wifi/mqtt install).
+        # Disabled by default to stay backward-compatible with the existing (compiled) frontend,
+        # which does not send any auth header. Enable it explicitly for network-exposed setups.
+        self.api_auth_enabled = False
+        self.api_token = ""
+
         # TIME
         self.time_24h = True
         self.time_font = "PressStart2P.ttf"
@@ -141,6 +147,16 @@ class Config:
         self.wifi_pass = get_str('WIFI', 'PASS', self.wifi_pass)
         self.wifi_configured = get_bool('WIFI', 'CONFIGURED', self.wifi_configured)
 
+        # Parse API auth (generate a token on first run if none exists yet)
+        self.api_auth_enabled = get_bool('API', 'AUTH_ENABLED', self.api_auth_enabled)
+        self.api_token = get_str('API', 'TOKEN', self.api_token)
+        needs_token_save = False
+        if not self.api_token:
+            import secrets
+            self.api_token = secrets.token_hex(16)
+            logging.info("Generated a new API token (see conf.ini [API] TOKEN to enable auth).")
+            needs_token_save = True
+
         # Parse TIME
         self.time_24h = get_bool('TIME', 'FORMAT_24H', self.time_24h)
         self.time_font = get_str('TIME', 'CLOCK_FONT', self.time_font)
@@ -188,6 +204,11 @@ class Config:
         self.standby_wake_up = get_str('STANDBY', 'WAKE_UP_AT', self.standby_wake_up)
         self.matrix_brightness_night = get_int('STANDBY', 'NIGHT_BRIGHTNESS', getattr(self, 'matrix_brightness_night', 10))
 
+        # Persist the freshly generated API token now that every section has been parsed
+        # (avoids clobbering not-yet-parsed sections with their defaults).
+        if needs_token_save:
+            self.save()
+
     def save(self):
         # Update parser object
         if not self.parser.has_section('MATRIX'): self.parser.add_section('MATRIX')
@@ -213,6 +234,10 @@ class Config:
         self.parser.set('WIFI', 'SSID', str(self.wifi_ssid))
         self.parser.set('WIFI', 'PASS', str(self.wifi_pass))
         self.parser.set('WIFI', 'CONFIGURED', str(self.wifi_configured).lower())
+
+        if not self.parser.has_section('API'): self.parser.add_section('API')
+        self.parser.set('API', 'AUTH_ENABLED', str(self.api_auth_enabled).lower())
+        self.parser.set('API', 'TOKEN', str(self.api_token))
 
         if not self.parser.has_section('TIME'): self.parser.add_section('TIME')
         self.parser.set('TIME', 'FORMAT_24H', str(self.time_24h).lower())

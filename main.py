@@ -9,6 +9,7 @@ sys.excepthook = handle_exception
 
 import time
 import logging
+from logging.handlers import RotatingFileHandler
 import threading
 import os
 import subprocess
@@ -29,7 +30,10 @@ except ImportError:
 
 class ArcadeMatrixApp:
     def __init__(self):
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        # Rotate the log file (5 MB max, 3 backups) so a 24/7 run never fills the SD card.
+        log_handler = RotatingFileHandler("arcadematrix.log", maxBytes=5 * 1024 * 1024, backupCount=3)
+        log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logging.basicConfig(level=logging.INFO, handlers=[log_handler, logging.StreamHandler()])
         self.config = Config()
         self.mw = MatrixWrapper(self.config)
         self.rotation_manager = RotationManager(self.mw, self.config)
@@ -148,9 +152,9 @@ method=auto
                 os.chmod(profile_path, 0o600)
                 
                 # Reload NetworkManager and force activation
-                subprocess.run('sudo nmcli connection reload', shell=True)
+                subprocess.run(['sudo', 'nmcli', 'connection', 'reload'], shell=False)
                 time.sleep(1)
-                subprocess.run(f'sudo nmcli connection up "{safe_ssid}"', shell=True)
+                subprocess.run(['sudo', 'nmcli', 'connection', 'up', safe_ssid], shell=False)
                 
                 logging.info("Wi-Fi profile generated and activated successfully.")
                 self.config.wifi_configured = True

@@ -182,5 +182,11 @@ This is especially useful for setting up Wi-Fi before the first boot.
 | `TURN_OFF_AT` | `23:00` | HH:MM formatted time for screen sleep. |
 | `WAKE_UP_AT` | `07:00` | HH:MM formatted time for screen wake. |
 
+### 🔒 [API]
+| Parameter | Default | Description |
+|---|---|---|
+| `AUTH_ENABLED` | `false` | If `true`, requires the `X-API-Token` header to match `TOKEN` on the sensitive endpoints: `/api/wifi`, `/api/mqtt/install`, `/api/system/reboot`, `/api/system/shutdown`. Disabled by default so the bundled Web UI keeps working out of the box; enable it if the device is reachable beyond a trusted LAN. |
+| `TOKEN` | *(auto-generated)* | A random token generated on first boot. Copy it here (or read it from `conf.ini` after first run) and send it as `X-API-Token` when calling protected endpoints. |
+
 ## 📜 License
 This project is open-source. Enjoy your Ultimate Retro Arcade Clock!

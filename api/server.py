@@ -20,6 +20,22 @@ def set_app_instance(instance):
     app_instance = instance
     config = instance.config
 
+# Routes that can change system state (reboot/shutdown/network/remote code install) - these are
+# protected by an opt-in token (see Config.api_auth_enabled) since they are the highest-impact
+# endpoints if the API were ever exposed beyond a trusted LAN.
+_SENSITIVE_ROUTES = {'/api/wifi', '/api/mqtt/install', '/api/system/reboot', '/api/system/shutdown'}
+
+@app.before_request
+def _check_api_auth():
+    if not config.api_auth_enabled:
+        return None
+    if request.path not in _SENSITIVE_ROUTES:
+        return None
+    supplied = request.headers.get('X-API-Token', '')
+    if not supplied or supplied != config.api_token:
+        return jsonify({'status': 'error', 'message': 'Missing or invalid X-API-Token header'}), 401
+    return None
+
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
@@ -157,7 +173,8 @@ def api_settings():
             tz_iana = data['timezone_iana']
             if tz_iana:
                 import subprocess
-                subprocess.Popen(f"sudo timedatectl set-timezone {tz_iana}", shell=True)
+                # Never interpolate user input into a shell string - pass as an argv list instead.
+                subprocess.Popen(['sudo', 'timedatectl', 'set-timezone', str(tz_iana)], shell=False)
 
         # DATE
         if 'date_offset_x' in data: config.date_offset_x = int(data['date_offset_x'])
@@ -307,10 +324,12 @@ def api_wifi():
     config.wifi_configured = False # Set to false to trigger nmcli
     config.save()
     
-    # Try connecting immediately
+    # Try connecting immediately.
+    # IMPORTANT: never build this as a shell string (shell=True) - the SSID/password
+    # come directly from user input and could otherwise be used for command injection.
     import subprocess
-    cmd = f'sudo nmcli dev wifi connect "{config.wifi_ssid}" password "{config.wifi_pass}"'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    cmd = ['sudo', 'nmcli', 'dev', 'wifi', 'connect', config.wifi_ssid, 'password', config.wifi_pass]
+    result = subprocess.run(cmd, shell=False, capture_output=True, text=True)
     
     if result.returncode == 0:
         config.wifi_configured = True
