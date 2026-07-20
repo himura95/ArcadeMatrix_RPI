@@ -1,6 +1,6 @@
-🇬🇧 English | 🇫🇷 [Français](README_FR.md) | 🇪🇸 [Español](README_ES.md)
-
 # ArcadeMatrix MUGEN Sprite Extractor
+
+🇬🇧 English | 🇫🇷 [Français](README_FR.md) | 🇪🇸 [Español](README_ES.md)
 
 This Python script (`mugen_extractor.py`) is custom-designed to extract, optimize, and convert fighting game characters from the **MUGEN** engine to make them compatible with ArcadeMatrix's `FighterEngine` (both ESP32 C++ and Raspberry Pi Python versions).
 
@@ -52,18 +52,30 @@ python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_32
 ```
 
 Options:
-| Flag | Default | Purpose |
-|---|---|---|
-| `--src` | *(required)* | Folder containing your MUGEN character subfolders. |
-| `--dest` | `./fighters_32` | Output folder for the generated `.fgt` files + `index.json`/`index.txt`. |
-| `--mode` | `FULLSIZE` | `SCALED` resizes characters to fit the panel height exactly (standard ESP32, no PSRAM); `FULLSIZE` keeps 1:1 scale (recommended on RPi, which has no such memory constraint). |
-| `--compress` | off | Gzip the output `.fgt` files (`.fgt.gz`) to save disk space. |
+| Flag | Short | Default | Purpose |
+|---|---|---|---|
+| `--src` | `-i` | *(required)* | Folder containing your MUGEN character subfolders. |
+| `--dest` | `-o` | `./fighters_32` | Output folder for the generated `.fgt` files + `index.json`/`index.txt`. |
+| `--mode` | | `FULLSIZE` | `SCALED` resizes characters to fit the panel height exactly (standard ESP32, no PSRAM); `FULLSIZE` keeps 1:1 scale (RPi or ESP32-S3 with PSRAM - see `docs/HARDWARE.md`). |
+| `--compress` | | off | Gzip the output `.fgt` files (`.fgt.gz`) - useful on RPi to save disk space. |
 
 To target both a 32px and a 64px matrix, just run it twice with different `--dest` folders:
 
 ```bash
 python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_32
 python mugen_extractor.py --src /Path/To/Your/Mugen/chars --dest ./fighters_64
+```
+
+### Alternative: interactive wrapper (no command-line flags needed)
+
+If you'd rather not type flags yourself, `start_extractor.sh` (macOS/Linux) /
+`start_extractor.bat` (Windows) create a local Python virtual environment, install `Pillow`
+automatically, and prompt you for the input/output folders interactively (they call
+`mugen_extractor.py -i <input> -o <output>` for you):
+
+```bash
+./start_extractor.sh     # macOS/Linux
+start_extractor.bat      # Windows
 ```
 
 ### Extraction Process
