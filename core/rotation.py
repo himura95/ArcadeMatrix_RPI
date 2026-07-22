@@ -72,7 +72,9 @@ class RotationManager:
                     self.mw.matrix.brightness = self.config.matrix_brightness
 
             rotation_list = self.config.idle_rotation
-            if not rotation_list:
+            if getattr(self.config, 'mqtt_enabled', False):
+                rotation_list = ['waiting']
+            elif not rotation_list:
                 logging.warning("No rotation configured. Defaulting to clock.")
                 rotation_list = ['clock']
                 
@@ -102,14 +104,24 @@ class RotationManager:
                     break
                     
                 engine_name = engine_name.strip()
-                if engine_name not in self.engines:
+                if engine_name not in self.engines and engine_name != 'waiting':
                     logging.warning(f"Unknown engine: {engine_name}")
                     continue
-                    
-                engine = self.engines[engine_name]
                 
                 # Run the engine for its configured duration or count
                 is_single = (len(rotation_list) == 1)
+                
+                if engine_name == 'waiting':
+                    from PIL import Image, ImageDraw
+                    img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), "black")
+                    draw = ImageDraw.Draw(img)
+                    draw.text((4, self.config.matrix_height // 2 - 8), "Waiting for", fill=(128, 128, 128))
+                    draw.text((14, self.config.matrix_height // 2 + 2), "Marquee...", fill=(128, 128, 128))
+                    self.mw.set_image(img)
+                    time.sleep(2)
+                    continue
+                    
+                engine = self.engines[engine_name]
                 
                 if engine_name == 'clock':
                     engine.run(86400 if is_single else self.config.idle_clock_dur)

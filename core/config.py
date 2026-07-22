@@ -90,6 +90,7 @@ class Config:
         # WEATHER
         self.weather_api = ""
         self.weather_city = ""
+        self.weather_lang = ""
         self.weather_offset_x = 0
         self.weather_offset_y = 0
 
@@ -219,6 +220,7 @@ class Config:
         # Parse WEATHER
         self.weather_api = get_str('WEATHER', 'API_KEY', self.weather_api)
         self.weather_city = get_str('WEATHER', 'CITY', self.weather_city)
+        self.weather_lang = get_str('WEATHER', 'LANG', self.weather_lang)
         self.weather_offset_x = get_int('WEATHER', 'WEATHER_OFFSET_X', self.weather_offset_x)
         self.weather_offset_y = get_int('WEATHER', 'WEATHER_OFFSET_Y', self.weather_offset_y)
 
@@ -298,6 +300,7 @@ class Config:
         if not self.parser.has_section('WEATHER'): self.parser.add_section('WEATHER')
         self.parser.set('WEATHER', 'API_KEY', str(self.weather_api))
         self.parser.set('WEATHER', 'CITY', str(self.weather_city))
+        self.parser.set('WEATHER', 'LANG', str(self.weather_lang))
         self.parser.set('WEATHER', 'WEATHER_OFFSET_X', str(self.weather_offset_x))
         self.parser.set('WEATHER', 'WEATHER_OFFSET_Y', str(self.weather_offset_y))
 

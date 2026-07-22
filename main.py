@@ -175,7 +175,15 @@ method=auto
         return IP
 
     def _show_ip(self):
-        ip_addr = self._get_ip()
+        # Wait up to 30 seconds for a valid IP address on boot
+        ip_addr = '127.0.0.1'
+        for _ in range(30):
+            ip_addr = self._get_ip()
+            if ip_addr != '127.0.0.1':
+                break
+            import time
+            time.sleep(1)
+            
         logging.info(f"Local IP Address: {ip_addr}")
         try:
             img = Image.new('RGB', (self.config.matrix_width, self.config.matrix_height), "black")

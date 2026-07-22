@@ -109,6 +109,7 @@ def api_settings():
             'fighter_interval_sec': getattr(config, 'idle_fighter_interval', 10),
             'weather_api_key': config.weather_api,
             'weather_city': config.weather_city,
+            'weather_lang': config.weather_lang,
             'wifi_ssid': config.wifi_ssid,
             'wifi_pass': config.wifi_pass,
             'mqtt_user': config.mqtt_user,
@@ -194,6 +195,7 @@ def api_settings():
         if 'weather_offset_y' in data: config.weather_offset_y = int(data['weather_offset_y'])
         if 'weather_api_key' in data: config.weather_api = data['weather_api_key']
         if 'weather_city' in data: config.weather_city = data['weather_city']
+        if 'weather_lang' in data: config.weather_lang = data['weather_lang']
         
         # STANDBY
         if 'night_mode_enabled' in data: config.standby_enabled = bool(data['night_mode_enabled'])

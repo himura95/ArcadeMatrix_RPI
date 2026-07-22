@@ -49,3 +49,9 @@ class MatrixWrapper:
         if self.matrix and canvas:
             return self.matrix.SwapOnVSync(canvas)
         return canvas
+
+    def set_image(self, image):
+        if self.matrix:
+            canvas = self.matrix.CreateFrameCanvas()
+            canvas.SetImage(image.convert('RGB'))
+            self.matrix.SwapOnVSync(canvas)

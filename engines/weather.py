@@ -25,6 +25,9 @@ class WeatherEngine:
             
         try:
             url = f"http://api.openweathermap.org/data/2.5/forecast?q={self.config.weather_city}&appid={self.config.weather_api}&units=metric"
+            if getattr(self.config, 'weather_lang', ''):
+                url += f"&lang={self.config.weather_lang}"
+                
             response = requests.get(url, timeout=5)
             if response.status_code == 200:
                 data = response.json()
@@ -33,15 +36,25 @@ class WeatherEngine:
                 # data['list'] contains 3-hour forecasts.
                 # We want: Current (index 0), Tomorrow (~24h later -> index 8), Day After (~48h later -> index 16)
                 self.forecasts = []
-                labels = ["AUJ", "DEM", "JEU"] # JEU will be replaced by actual day name
                 
-                # Real day names for French
+                lang = getattr(self.config, 'weather_lang', 'en').lower()
+                if not lang:
+                    lang = 'en'
+                    
+                if lang == "fr":
+                    days = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"]
+                    labels = ["AUJ.", "DEMN", "DAY3"]
+                elif lang == "es":
+                    days = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"]
+                    labels = ["HOY", "MANA", "DAY3"]
+                else:
+                    days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+                    labels = ["TODAY", "TMRW", "DAY3"]
+                
                 import datetime
-                days_fr = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"]
-                
                 now_dt = datetime.datetime.now()
                 
-                for idx, label in zip([0, 8, 16], ["AUJ", "DEM", "DAY3"]):
+                for idx, label in zip([0, 8, 16], labels):
                     if idx < len(data['list']):
                         item = data['list'][idx]
                         temp = int(round(item['main']['temp']))
@@ -49,7 +62,7 @@ class WeatherEngine:
                         
                         if label == "DAY3":
                             day_idx = (now_dt.weekday() + 2) % 7
-                            label = days_fr[day_idx]
+                            label = days[day_idx]
                             
                         self.forecasts.append({
                             'temp': f"{temp}°C",
