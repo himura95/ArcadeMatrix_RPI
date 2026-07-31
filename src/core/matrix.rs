@@ -77,7 +77,74 @@ impl MatrixBackend for MockMatrix {
     }
 }
 
-#[cfg(all(target_os = "linux", feature = "hardware"))]
+#[cfg(target_os = "linux")]
+use rpi_led_matrix::{LedCanvas, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
+
+#[cfg(target_os = "linux")]
 pub struct HardwareMatrix {
-    // rpi-led-matrix canvas wrapper
+    matrix: LedMatrix,
+    canvas: LedCanvas,
+}
+
+#[cfg(target_os = "linux")]
+impl HardwareMatrix {
+    pub fn new(
+        rows: u32,
+        cols: u32,
+        chain: u32,
+        parallel: u32,
+        hardware_mapping: &str,
+        slowdown: u32,
+        brightness: u8,
+    ) -> Result<Self, String> {
+        let mut options = LedMatrixOptions::new();
+        options.set_rows(rows);
+        options.set_cols(cols);
+        options.set_chain_length(chain);
+        options.set_parallel(parallel);
+        if !hardware_mapping.is_empty() {
+            options.set_hardware_mapping(hardware_mapping);
+        }
+
+        let mut rt_options = LedRuntimeOptions::new();
+        rt_options.set_gpio_slowdown(slowdown as i32);
+
+        let matrix = LedMatrix::new(options, rt_options)
+            .map_err(|e| format!("Failed to init LED matrix: {:?}", e))?;
+        let canvas = matrix.offscreen_canvas();
+
+        let mut hw = Self { matrix, canvas };
+        hw.set_brightness(brightness);
+        Ok(hw)
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl MatrixBackend for HardwareMatrix {
+    fn width(&self) -> u32 {
+        self.canvas.size().0 as u32
+    }
+
+    fn height(&self) -> u32 {
+        self.canvas.size().1 as u32
+    }
+
+    fn set_pixel(&mut self, x: i32, y: i32, red: u8, green: u8, blue: u8) {
+        if x >= 0 && y >= 0 && x < self.width() as i32 && y < self.height() as i32 {
+            self.canvas
+                .set_pixel(x as usize, y as usize, red, green, blue);
+        }
+    }
+
+    fn clear(&mut self) {
+        self.canvas.clear();
+    }
+
+    fn update(&mut self) {
+        self.canvas = self.matrix.swap_canvas(self.canvas);
+    }
+
+    fn set_brightness(&mut self, brightness: u8) {
+        self.matrix.set_brightness(brightness);
+    }
 }

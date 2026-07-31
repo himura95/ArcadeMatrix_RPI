@@ -1,10 +1,20 @@
 use crate::api::run_server;
 use crate::core::config::Config;
+#[cfg(target_os = "linux")]
+use crate::core::matrix::HardwareMatrix;
 use crate::core::matrix::{MatrixBackend, MockMatrix};
+use crate::core::rotation::RotationState;
+
 use crate::engines::clock::ClockEngine;
+use crate::engines::date::DateEngine;
+use crate::engines::fighter::FighterEngine;
+use crate::engines::gif::GifEngine;
+use crate::engines::marquee::MarqueeEngine;
 use crate::engines::message::{MessageEngine, MessagePayload};
+use crate::engines::weather::WeatherEngine;
 
 use std::net::UdpSocket;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tracing::info;
 
@@ -42,11 +52,57 @@ impl ArcadeMatrixApp {
             }
         });
 
-        let mut matrix = MockMatrix::new(64, 32);
-        let mut clock_engine = ClockEngine::new(64, 32);
+        // Initialize hardware matrix on Linux target or MockMatrix fallback
+        let mut matrix: Box<dyn MatrixBackend> = {
+            #[cfg(target_os = "linux")]
+            {
+                let cfg = self.config.settings.read();
+                match HardwareMatrix::new(
+                    cfg.matrix_rows,
+                    cfg.matrix_cols,
+                    cfg.matrix_chain,
+                    cfg.matrix_parallel,
+                    &cfg.matrix_mapping,
+                    cfg.matrix_slowdown,
+                    cfg.matrix_brightness as u8,
+                ) {
+                    Ok(hw) => Box::new(hw),
+                    Err(e) => {
+                        tracing::warn!(
+                            "Failed to initialize HardwareMatrix, falling back to MockMatrix: {}",
+                            e
+                        );
+                        Box::new(MockMatrix::new(
+                            cfg.matrix_cols * cfg.matrix_chain,
+                            cfg.matrix_rows,
+                        ))
+                    }
+                }
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                let cfg = self.config.settings.read();
+                Box::new(MockMatrix::new(
+                    cfg.matrix_cols * cfg.matrix_chain,
+                    cfg.matrix_rows,
+                ))
+            }
+        };
+
+        let width = matrix.width();
+        let height = matrix.height();
+
+        let mut clock_engine = ClockEngine::new(width, height);
+        let mut date_engine = DateEngine::new();
+        let mut weather_engine = WeatherEngine::new();
+        let mut gif_engine = GifEngine::new();
+        let _fighter_engine = FighterEngine::new(width);
+        let marquee_engine = MarqueeEngine::new();
         let mut message_engine = MessageEngine::new();
 
-        // Display startup IP Address banner on DMD matrix
+        let mut rotation_state = RotationState::new();
+
+        // 1. Display startup IP Address banner on DMD matrix
         let startup_payload = MessagePayload {
             text: format!("IP: {}", local_ip),
             color: "#00ffc8".to_string(),
@@ -59,22 +115,131 @@ impl ArcadeMatrixApp {
         let start_time = std::time::Instant::now();
         while start_time.elapsed() < std::time::Duration::from_secs(4) {
             matrix.clear();
-            message_engine.render(&mut matrix, &startup_payload);
+            message_engine.render(matrix.as_mut(), &startup_payload);
             matrix.update();
             tokio::time::sleep(std::time::Duration::from_millis(30)).await;
         }
 
+        // 2. Main rotation and engine loop
         loop {
-            if self
-                .config
-                .matrix_power
-                .load(std::sync::atomic::Ordering::Relaxed)
-            {
+            // Standby / Night mode check
+            let (standby_enabled, turn_off_at, wake_up_at, night_bright) = {
+                let s = self.config.settings.read();
+                (
+                    s.standby_enabled,
+                    s.standby_turn_off.clone(),
+                    s.standby_wake_up.clone(),
+                    s.standby_night_brightness,
+                )
+            };
+
+            let is_night =
+                crate::core::rotation::is_night_time(standby_enabled, &turn_off_at, &wake_up_at);
+
+            if is_night {
+                if night_bright == 0 {
+                    matrix.clear();
+                    matrix.update();
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    continue;
+                } else {
+                    matrix.set_brightness(night_bright as u8);
+                }
+            } else {
+                let bright = self.config.matrix_brightness.load(Ordering::Relaxed);
+                matrix.set_brightness(bright as u8);
+            }
+
+            // Power check
+            if !self.config.matrix_power.load(Ordering::Relaxed) {
                 matrix.clear();
-                clock_engine.render(&mut matrix, &self.config);
+                matrix.update();
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                continue;
+            }
+
+            // Handle forced engine (Custom Message, Marquee Image)
+            let forced = self.config.force_engine.lock().clone();
+            if let Some(ref mode) = forced {
+                if mode == "message" {
+                    if let Some(ref payload_val) = *self.config.message_payload.lock() {
+                        if let Ok(payload) =
+                            serde_json::from_value::<MessagePayload>(payload_val.clone())
+                        {
+                            matrix.clear();
+                            message_engine.render(matrix.as_mut(), &payload);
+                            matrix.update();
+                            tokio::time::sleep(std::time::Duration::from_millis(30)).await;
+                            continue;
+                        }
+                    }
+                } else if mode == "marquee" {
+                    if let Some(ref img) = *self.config.image_obj.lock() {
+                        matrix.clear();
+                        marquee_engine.render(matrix.as_mut(), img);
+                        matrix.update();
+                        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                        continue;
+                    }
+                }
+            }
+
+            // Rotation sequence execution
+            let (idle_list, clock_dur, date_dur, weather_dur) = {
+                let s = self.config.settings.read();
+                (
+                    s.idle_rotation.clone(),
+                    s.idle_clock_duration_sec,
+                    s.idle_date_duration_sec,
+                    s.idle_weather_duration_sec,
+                )
+            };
+
+            if !idle_list.is_empty() {
+                let current_mode = &idle_list[rotation_state.current_index % idle_list.len()];
+
+                matrix.clear();
+                match current_mode.as_str() {
+                    "clock" => {
+                        clock_engine.render(matrix.as_mut(), &self.config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(clock_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    "date" => {
+                        date_engine.render(matrix.as_mut(), &self.config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(date_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    "weather" => {
+                        weather_engine.render(matrix.as_mut(), &self.config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(weather_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    "gifs" => {
+                        gif_engine.render_next_frame(matrix.as_mut());
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(10)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    _ => {
+                        clock_engine.render(matrix.as_mut(), &self.config);
+                    }
+                }
                 matrix.update();
             } else {
                 matrix.clear();
+                clock_engine.render(matrix.as_mut(), &self.config);
                 matrix.update();
             }
 
