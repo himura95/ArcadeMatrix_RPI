@@ -21,7 +21,12 @@ impl PongClock {
         }
     }
 
-    pub fn update_and_render(&mut self, matrix: &mut dyn MatrixBackend, hours: u32, minutes: u32) {
+    pub fn update_and_render(
+        &mut self,
+        matrix: &mut dyn MatrixBackend,
+        _hours: u32,
+        _minutes: u32,
+    ) {
         let w = matrix.width() as f32;
         let h = matrix.height() as f32;
 

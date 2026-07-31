@@ -1,6 +1,5 @@
 use crate::core::matrix::MatrixBackend;
 use crate::core::theme::get_theme_info;
-use image::{Rgb, RgbImage};
 use rusttype::{Font, Scale};
 
 pub struct BaseRenderer {

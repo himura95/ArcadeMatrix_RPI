@@ -3,7 +3,6 @@ use crate::core::matrix::MatrixBackend;
 use crate::engines::renderers::BaseRenderer;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
-use tracing::error;
 
 #[derive(Deserialize)]
 struct WeatherMain {

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use tracing::{error, info};
+use tracing::info;
 
 pub struct DmdCache {
     cache_dir: PathBuf,

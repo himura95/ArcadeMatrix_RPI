@@ -7,7 +7,7 @@ impl WordClock {
         Self
     }
 
-    pub fn render(&self, matrix: &mut dyn MatrixBackend, hours: u32, minutes: u32) {
+    pub fn render(&self, matrix: &mut dyn MatrixBackend, _hours: u32, _minutes: u32) {
         let grid = [
             "IT IS HALF TEN",
             "QUARTER PAST TWO",

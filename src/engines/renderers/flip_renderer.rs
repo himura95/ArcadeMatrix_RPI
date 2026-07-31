@@ -9,9 +9,9 @@ impl FlipRenderer {
         Self { anim_progress: 1.0 }
     }
 
-    pub fn render_digit(&mut self, matrix: &mut dyn MatrixBackend, x: i32, y: i32, digit: char) {
+    pub fn render_digit(&mut self, matrix: &mut dyn MatrixBackend, x: i32, y: i32, _digit: char) {
         let bg_color = (30, 30, 30);
-        let fg_color = (240, 240, 240);
+        let _fg_color = (240, 240, 240);
         let line_color = (10, 10, 10);
 
         // Draw card background (12x16 pixels)

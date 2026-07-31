@@ -6,6 +6,10 @@ description = "ArcadeMatrix RPi - Native Rust LED matrix controller for HUB75 pa
 license = "PolyForm-Noncommercial-1.0.0"
 build = "build.rs"
 
+[features]
+default = []
+hardware = []
+
 [dependencies]
 # Config
 configparser = "3"

@@ -1,10 +1,8 @@
 use configparser::ini::Ini;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU32};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigSettings {

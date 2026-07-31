@@ -85,7 +85,7 @@ pub async fn handle_update(mut payload: Multipart) -> impl Responder {
         }
     }
 
-    if let Err(e) = fs::rename(TEMP_PATH, BINARY_PATH).await {
+    if let Err(_e) = fs::rename(TEMP_PATH, BINARY_PATH).await {
         if let Err(e2) = fs::copy(TEMP_PATH, BINARY_PATH).await {
             return HttpResponse::InternalServerError().json(serde_json::json!({
                 "status": "error",

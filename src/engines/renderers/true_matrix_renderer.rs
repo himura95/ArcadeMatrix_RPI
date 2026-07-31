@@ -29,7 +29,7 @@ impl TrueMatrixRenderer {
 
     pub fn render(&mut self, matrix: &mut dyn MatrixBackend) {
         let h = matrix.height() as f32;
-        let mut rng = rand::thread_rng();
+        let _rng = rand::thread_rng();
 
         for col in &mut self.columns {
             col.y += col.speed;
