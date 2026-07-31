@@ -52,6 +52,9 @@ impl ArcadeMatrixApp {
             }
         });
 
+        // Start MQTT client background worker
+        crate::engines::network::start_mqtt_client(Arc::clone(&self.config));
+
         // Initialize hardware matrix on Linux target or MockMatrix fallback
         let mut matrix: Box<dyn MatrixBackend> = {
             #[cfg(target_os = "linux")]
@@ -225,6 +228,8 @@ impl ArcadeMatrixApp {
                         }
                     }
                     "gifs" => {
+                        let selected = self.config.settings.read().selected_gifs.clone();
+                        gif_engine.play_random_playlist_gif(&selected);
                         gif_engine.render_next_frame(matrix.as_mut());
                         if rotation_state.mode_start_time.elapsed()
                             >= std::time::Duration::from_secs(10)

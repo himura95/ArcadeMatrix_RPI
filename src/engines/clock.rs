@@ -52,8 +52,32 @@ impl ClockEngine {
         let seconds = now.format("%S").to_string().parse::<u32>().unwrap_or(0);
 
         match settings.time_theme {
-            18 => self.cyberpunk.render(matrix),
-            21 => self.true_matrix.render(matrix),
+            18 => {
+                self.cyberpunk.render(matrix);
+                self.base_renderer.render_text(
+                    matrix,
+                    &time_str,
+                    0,
+                    settings.time_size,
+                    settings.time_offset_x,
+                    settings.time_offset_y,
+                    Some((0, 255, 255)),
+                    None,
+                );
+            }
+            21 => {
+                self.true_matrix.render(matrix);
+                self.base_renderer.render_text(
+                    matrix,
+                    &time_str,
+                    0,
+                    settings.time_size,
+                    settings.time_offset_x,
+                    settings.time_offset_y,
+                    Some((0, 255, 70)),
+                    None,
+                );
+            }
             22 => self.pong.update_and_render(matrix, hours, minutes),
             23 => self.tetris.render(matrix, &time_str),
             24 => self.word.render(matrix, hours, minutes),

@@ -1,6 +1,7 @@
 use crate::core::matrix::MatrixBackend;
 use gif::Decoder;
 use image::{Rgb, RgbImage};
+use rand::seq::SliceRandom;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
@@ -8,6 +9,7 @@ pub struct GifEngine {
     current_gif_path: Option<PathBuf>,
     frames: Vec<RgbImage>,
     frame_index: usize,
+    last_played_gif: Option<PathBuf>,
 }
 
 impl GifEngine {
@@ -16,6 +18,7 @@ impl GifEngine {
             current_gif_path: None,
             frames: Vec::new(),
             frame_index: 0,
+            last_played_gif: None,
         }
     }
 
@@ -45,13 +48,73 @@ impl GifEngine {
         }
 
         if !frames.is_empty() {
-            self.current_gif_path = Some(path.as_ref().to_path_buf());
+            let pb = path.as_ref().to_path_buf();
+            self.last_played_gif = Some(pb.clone());
+            self.current_gif_path = Some(pb);
             self.frames = frames;
             self.frame_index = 0;
             true
         } else {
             false
         }
+    }
+
+    pub fn play_random_playlist_gif(&mut self, selected_playlists: &[String]) -> bool {
+        let mut valid_files = Vec::new();
+
+        if !selected_playlists.is_empty() {
+            for p_str in selected_playlists {
+                let p = Path::new(p_str);
+                if p.is_dir() {
+                    if let Ok(entries) = std::fs::read_dir(p) {
+                        for entry in entries.flatten() {
+                            let fname = entry.file_name().to_string_lossy().to_string();
+                            if fname.to_lowercase().ends_with(".gif") && !fname.starts_with("._") {
+                                valid_files.push(entry.path());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if valid_files.is_empty() {
+            // Fallback: scan all subdirectories of /gifs/
+            if let Ok(entries) = std::fs::read_dir("gifs") {
+                for entry in entries.flatten() {
+                    if entry.path().is_dir() {
+                        if let Ok(sub_entries) = std::fs::read_dir(entry.path()) {
+                            for sub in sub_entries.flatten() {
+                                let fname = sub.file_name().to_string_lossy().to_string();
+                                if fname.to_lowercase().ends_with(".gif")
+                                    && !fname.starts_with("._")
+                                {
+                                    valid_files.push(sub.path());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if valid_files.is_empty() {
+            return false;
+        }
+
+        let mut rng = rand::thread_rng();
+        // Avoid picking exact same GIF twice if multiple available
+        if valid_files.len() > 1 {
+            if let Some(ref last) = self.last_played_gif {
+                valid_files.retain(|p| p != last);
+            }
+        }
+
+        if let Some(chosen) = valid_files.choose(&mut rng) {
+            return self.load_gif(chosen);
+        }
+
+        false
     }
 
     pub fn render_next_frame(&mut self, matrix: &mut dyn MatrixBackend) {
