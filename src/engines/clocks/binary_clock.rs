@@ -9,9 +9,12 @@ impl BinaryClock {
 
     pub fn render(&self, matrix: &mut dyn MatrixBackend, hours: u32, minutes: u32, seconds: u32) {
         let digits = [
-            hours / 10, hours % 10,
-            minutes / 10, minutes % 10,
-            seconds / 10, seconds % 10,
+            hours / 10,
+            hours % 10,
+            minutes / 10,
+            minutes % 10,
+            seconds / 10,
+            seconds % 10,
         ];
 
         let active_color = (0, 255, 200);

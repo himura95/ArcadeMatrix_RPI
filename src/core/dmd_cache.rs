@@ -1,8 +1,8 @@
+use parking_lot::Mutex;
 use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use parking_lot::Mutex;
 use tracing::{error, info};
 
 pub struct DmdCache {
@@ -44,7 +44,9 @@ impl DmdCache {
                 if let Ok(bytes) = resp.bytes() {
                     let tmp_path = self.cache_dir.join(format!("{}.tmp", local_filename));
                     if let Ok(mut file) = File::create(&tmp_path) {
-                        if file.write_all(&bytes).is_ok() && fs::rename(&tmp_path, &local_path).is_ok() {
+                        if file.write_all(&bytes).is_ok()
+                            && fs::rename(&tmp_path, &local_path).is_ok()
+                        {
                             info!("Downloaded marquee for {}", key);
                             return Some(local_path);
                         }

@@ -31,7 +31,11 @@ impl ArcadeMatrixApp {
         let mut clock_engine = ClockEngine::new(64, 32);
 
         loop {
-            if self.config.matrix_power.load(std::sync::atomic::Ordering::Relaxed) {
+            if self
+                .config
+                .matrix_power
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
                 matrix.clear();
                 clock_engine.render(&mut matrix, &self.config);
                 matrix.update();

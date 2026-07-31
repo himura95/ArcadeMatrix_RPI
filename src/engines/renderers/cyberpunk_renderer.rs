@@ -21,7 +21,11 @@ impl CyberpunkRenderer {
                 x: rng.gen_range(0.0..width as f32),
                 y: rng.gen_range(0.0..height as f32),
                 speed: rng.gen_range(0.5..2.0),
-                color: if rng.gen_bool(0.5) { (0, 255, 255) } else { (255, 0, 128) },
+                color: if rng.gen_bool(0.5) {
+                    (0, 255, 255)
+                } else {
+                    (255, 0, 128)
+                },
             });
         }
         Self { particles }

@@ -42,7 +42,9 @@ pub fn start_mqtt_client(config: Arc<Config>) {
                         info!("MQTT Recalbox game payload: {}", payload);
                         // Trigger marquee download / engine switch in config
                         *config.force_engine.lock() = Some("marquee".to_string());
-                        config.reload_flag.store(true, std::sync::atomic::Ordering::Relaxed);
+                        config
+                            .reload_flag
+                            .store(true, std::sync::atomic::Ordering::Relaxed);
                     }
                 }
                 Err(e) => {

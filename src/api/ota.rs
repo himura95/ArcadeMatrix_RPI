@@ -95,7 +95,10 @@ pub async fn handle_update(mut payload: Multipart) -> impl Responder {
         let _ = fs::remove_file(TEMP_PATH).await;
     }
 
-    let _ = Command::new("chmod").args(["+x", BINARY_PATH]).status().await;
+    let _ = Command::new("chmod")
+        .args(["+x", BINARY_PATH])
+        .status()
+        .await;
 
     info!("Firmware update successful. Scheduling systemd service restart...");
 

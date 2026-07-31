@@ -43,8 +43,20 @@ impl PongClock {
 
         // Draw paddles
         for dy in -2..=2 {
-            matrix.set_pixel(1, (self.ball_y as i32 + dy).clamp(0, h as i32 - 1), 255, 255, 255);
-            matrix.set_pixel((w - 2.0) as i32, (self.ball_y as i32 + dy).clamp(0, h as i32 - 1), 255, 255, 255);
+            matrix.set_pixel(
+                1,
+                (self.ball_y as i32 + dy).clamp(0, h as i32 - 1),
+                255,
+                255,
+                255,
+            );
+            matrix.set_pixel(
+                (w - 2.0) as i32,
+                (self.ball_y as i32 + dy).clamp(0, h as i32 - 1),
+                255,
+                255,
+                255,
+            );
         }
 
         // Draw ball

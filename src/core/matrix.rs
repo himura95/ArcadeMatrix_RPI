@@ -12,7 +12,13 @@ pub trait MatrixBackend: Send + Sync {
         for iy in 0..img_h {
             for ix in 0..img_w {
                 let px = img.get_pixel(ix, iy);
-                self.set_pixel(offset_x + ix as i32, offset_y + iy as i32, px[0], px[1], px[2]);
+                self.set_pixel(
+                    offset_x + ix as i32,
+                    offset_y + iy as i32,
+                    px[0],
+                    px[1],
+                    px[2],
+                );
             }
         }
     }
@@ -51,7 +57,8 @@ impl MatrixBackend for MockMatrix {
             let r = (red as f32 * scale) as u8;
             let g = (green as f32 * scale) as u8;
             let b = (blue as f32 * scale) as u8;
-            self.canvas.put_pixel(x as u32, y as u32, image::Rgb([r, g, b]));
+            self.canvas
+                .put_pixel(x as u32, y as u32, image::Rgb([r, g, b]));
         }
     }
 

@@ -73,8 +73,16 @@ fn test_gif_engine_init() {
 fn test_fighter_engine_initialization() {
     let mut engine = FighterEngine::new(64);
     let mut matrix = MockMatrix::new(64, 32);
-    let p1 = FighterSprite { width: 16, height: 16, frames: vec![] };
-    let p2 = FighterSprite { width: 16, height: 16, frames: vec![] };
+    let p1 = FighterSprite {
+        width: 16,
+        height: 16,
+        frames: vec![],
+    };
+    let p2 = FighterSprite {
+        width: 16,
+        height: 16,
+        frames: vec![],
+    };
 
     engine.render(&mut matrix, &p1, &p2);
     assert_eq!(engine.p1_x, 4);
@@ -84,5 +92,7 @@ fn test_fighter_engine_initialization() {
 fn test_dmd_cache_lookup() {
     let temp_dir = tempfile::tempdir().unwrap();
     let cache = DmdCache::new(temp_dir.path());
-    assert!(cache.get_marquee_path("invalid_sys", "invalid_game").is_none());
+    assert!(cache
+        .get_marquee_path("invalid_sys", "invalid_game")
+        .is_none());
 }

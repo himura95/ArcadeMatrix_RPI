@@ -1,10 +1,10 @@
-pub mod renderers;
-pub mod clocks;
 pub mod clock;
+pub mod clocks;
 pub mod date;
-pub mod weather;
-pub mod gif;
 pub mod fighter;
-pub mod message;
+pub mod gif;
 pub mod marquee;
+pub mod message;
 pub mod network;
+pub mod renderers;
+pub mod weather;

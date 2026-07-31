@@ -82,18 +82,25 @@ async fn get_settings(data: web::Data<AppState>) -> impl Responder {
 }
 
 #[post("/api/settings")]
-async fn post_settings(data: web::Data<AppState>, body: web::Json<serde_json::Value>) -> impl Responder {
+async fn post_settings(
+    data: web::Data<AppState>,
+    body: web::Json<serde_json::Value>,
+) -> impl Responder {
     let mut s = data.config.settings.write();
     if let Some(v) = body.get("brightness_limit").and_then(|v| v.as_u64()) {
         s.matrix_brightness = v as u32;
-        data.config.matrix_brightness.store(v as u32, std::sync::atomic::Ordering::Relaxed);
+        data.config
+            .matrix_brightness
+            .store(v as u32, std::sync::atomic::Ordering::Relaxed);
     }
     if let Some(v) = body.get("clock_theme").and_then(|v| v.as_i64()) {
         s.time_theme = v as i32;
     }
     drop(s);
     data.config.save();
-    data.config.reload_flag.store(true, std::sync::atomic::Ordering::Relaxed);
+    data.config
+        .reload_flag
+        .store(true, std::sync::atomic::Ordering::Relaxed);
     HttpResponse::Ok().json(json!({"status": "success"}))
 }
 
@@ -131,7 +138,10 @@ async fn api_system_info() -> impl Responder {
 async fn api_reboot() -> impl Responder {
     tokio::spawn(async {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        let _ = tokio::process::Command::new("sudo").arg("reboot").status().await;
+        let _ = tokio::process::Command::new("sudo")
+            .arg("reboot")
+            .status()
+            .await;
     });
     HttpResponse::Ok().json(json!({"status": "success", "message": "Rebooting..."}))
 }
@@ -140,18 +150,31 @@ async fn api_reboot() -> impl Responder {
 async fn api_shutdown() -> impl Responder {
     tokio::spawn(async {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        let _ = tokio::process::Command::new("sudo").args(["shutdown", "now"]).status().await;
+        let _ = tokio::process::Command::new("sudo")
+            .args(["shutdown", "now"])
+            .status()
+            .await;
     });
     HttpResponse::Ok().json(json!({"status": "success", "message": "Shutting down..."}))
 }
 
 #[post("/api/system/power")]
-async fn api_power(data: web::Data<AppState>, body: web::Json<serde_json::Value>) -> impl Responder {
+async fn api_power(
+    data: web::Data<AppState>,
+    body: web::Json<serde_json::Value>,
+) -> impl Responder {
     if let Some(state) = body.get("state").and_then(|v| v.as_bool()) {
-        data.config.matrix_power.store(state, std::sync::atomic::Ordering::Relaxed);
-        data.config.reload_flag.store(true, std::sync::atomic::Ordering::Relaxed);
+        data.config
+            .matrix_power
+            .store(state, std::sync::atomic::Ordering::Relaxed);
+        data.config
+            .reload_flag
+            .store(true, std::sync::atomic::Ordering::Relaxed);
     }
-    let p = data.config.matrix_power.load(std::sync::atomic::Ordering::Relaxed);
+    let p = data
+        .config
+        .matrix_power
+        .load(std::sync::atomic::Ordering::Relaxed);
     HttpResponse::Ok().json(json!({"status": "success", "matrix_power": p}))
 }
 

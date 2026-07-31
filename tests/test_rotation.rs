@@ -8,7 +8,11 @@ fn test_night_mode_range() {
 #[test]
 fn test_rotation_state() {
     let mut rot = RotationState::new();
-    let modes = vec!["clock".to_string(), "date".to_string(), "weather".to_string()];
+    let modes = vec![
+        "clock".to_string(),
+        "date".to_string(),
+        "weather".to_string(),
+    ];
 
     assert_eq!(rot.next_mode(&modes), Some("date"));
     assert_eq!(rot.next_mode(&modes), Some("weather"));

@@ -33,7 +33,10 @@ impl BaseRenderer {
         let scale = Scale::uniform(8.0 * size as f32);
         let v_metrics = self.font.v_metrics(scale);
 
-        let glyphs: Vec<_> = self.font.layout(text, scale, rusttype::point(0.0, v_metrics.ascent)).collect();
+        let glyphs: Vec<_> = self
+            .font
+            .layout(text, scale, rusttype::point(0.0, v_metrics.ascent))
+            .collect();
         let text_width = glyphs
             .iter()
             .rev()

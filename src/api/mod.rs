@@ -1,4 +1,4 @@
-pub mod server;
 pub mod ota;
+pub mod server;
 
 pub use server::run_server;

@@ -7,7 +7,10 @@ pub struct PacmanClock {
 
 impl PacmanClock {
     pub fn new() -> Self {
-        Self { pacman_x: 0.0, direction: 1.0 }
+        Self {
+            pacman_x: 0.0,
+            direction: 1.0,
+        }
     }
 
     pub fn render(&mut self, matrix: &mut dyn MatrixBackend) {

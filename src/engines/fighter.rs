@@ -73,15 +73,28 @@ impl FighterEngine {
         }
     }
 
-    pub fn render(&mut self, matrix: &mut dyn MatrixBackend, p1: &FighterSprite, p2: &FighterSprite) {
+    pub fn render(
+        &mut self,
+        matrix: &mut dyn MatrixBackend,
+        p1: &FighterSprite,
+        p2: &FighterSprite,
+    ) {
         if !p1.frames.is_empty() {
             let frame = &p1.frames[self.frame_idx % p1.frames.len()];
-            matrix.draw_image(frame, self.p1_x, (matrix.height() as i32) - (p1.height as i32));
+            matrix.draw_image(
+                frame,
+                self.p1_x,
+                (matrix.height() as i32) - (p1.height as i32),
+            );
         }
 
         if !p2.frames.is_empty() {
             let frame = &p2.frames[self.frame_idx % p2.frames.len()];
-            matrix.draw_image(frame, self.p2_x, (matrix.height() as i32) - (p2.height as i32));
+            matrix.draw_image(
+                frame,
+                self.p2_x,
+                (matrix.height() as i32) - (p2.height as i32),
+            );
         }
 
         self.frame_idx += 1;
