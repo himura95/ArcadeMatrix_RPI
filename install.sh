@@ -6,19 +6,27 @@ echo "======================================"
 echo "    ArcadeMatrix RPi Installer (Rust) "
 echo "======================================"
 
-# Stop existing service if running
-if systemctl list-unit-files | grep -q arcadematrix.service; then
-    echo "Stopping existing ArcadeMatrix service..."
-    sudo systemctl stop arcadematrix.service || true
-fi
+# Stop and disable any legacy Python or Rust services if running
+echo "Cleaning up legacy Python services & stopping running processes..."
+sudo systemctl stop arcadematrix.service arcadematrix_py.service matrix.service 2>/dev/null || true
+sudo systemctl disable arcadematrix_py.service matrix.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/arcadematrix_py.service /etc/systemd/system/matrix.service
+
+# Remove legacy python virtual environments and compiled python files if present in the repo
+rm -rf venv/ .venv/ env/ __pycache__/ *.pyc
 
 # Install system dependencies
-sudo apt-get update
-sudo apt-get install -y curl mosquitto mosquitto-clients
+if command -v apt-get &> /dev/null; then
+    echo "Installing system dependencies..."
+    sudo apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git build-essential curl mosquitto mosquitto-clients libssl-dev pkg-config
+fi
 
 # Configure Mosquitto MQTT Broker
-sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
-sudo systemctl restart mosquitto || true
+if command -v mosquitto &> /dev/null; then
+    sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
+    sudo systemctl restart mosquitto || true
+fi
 
 CURRENT_DIR=$(pwd)
 

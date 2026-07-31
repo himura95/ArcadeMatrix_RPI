@@ -12,12 +12,12 @@ echo "due to the new RP1 GPIO chip. You MUST use an active adapter board."
 echo "Pi 3, Pi 4, and Zero 2 W are fully supported out of the box."
 echo "======================================"
 
-# 1. Stop existing service if installed
-if command -v systemctl &> /dev/null && systemctl list-unit-files | grep -q arcadematrix.service; then
-    echo "Stopping existing ArcadeMatrix service..."
-    sudo systemctl stop arcadematrix.service || true
-    sudo systemctl disable arcadematrix.service 2>/dev/null || true
-fi
+# 1. Stop & clean existing Python/Rust services if installed
+echo "Stopping existing ArcadeMatrix services & cleaning legacy Python files..."
+sudo systemctl stop arcadematrix.service arcadematrix_py.service matrix.service 2>/dev/null || true
+sudo systemctl disable arcadematrix.service arcadematrix_py.service matrix.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/arcadematrix_py.service /etc/systemd/system/matrix.service
+rm -rf venv/ .venv/ env/ __pycache__/ *.pyc
 
 # 2. Update and install system dependencies (Linux / Debian)
 if command -v apt-get &> /dev/null; then
