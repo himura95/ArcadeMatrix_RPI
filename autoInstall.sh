@@ -13,21 +13,23 @@ echo "Pi 3, Pi 4, and Zero 2 W are fully supported out of the box."
 echo "======================================"
 
 # 1. Stop existing service if installed
-if systemctl list-unit-files | grep -q arcadematrix.service; then
+if command -v systemctl &> /dev/null && systemctl list-unit-files | grep -q arcadematrix.service; then
     echo "Stopping existing ArcadeMatrix service..."
     sudo systemctl stop arcadematrix.service || true
     sudo systemctl disable arcadematrix.service 2>/dev/null || true
 fi
 
-# 2. Update and install dependencies
-echo "Updating packages and installing system dependencies..."
-sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git build-essential curl mosquitto mosquitto-clients libssl-dev pkg-config
+# 2. Update and install system dependencies (Linux / Debian)
+if command -v apt-get &> /dev/null; then
+    echo "Updating packages and installing system dependencies..."
+    sudo apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git build-essential curl mosquitto mosquitto-clients libssl-dev pkg-config
 
-# Configure Mosquitto to allow external anonymous connections (Required for Recalbox/Batocera)
-echo "Configuring Mosquitto MQTT Broker..."
-sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
-sudo systemctl restart mosquitto || true
+    # Configure Mosquitto to allow external anonymous connections (Required for Recalbox/Batocera)
+    echo "Configuring Mosquitto MQTT Broker..."
+    sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
+    sudo systemctl restart mosquitto || true
+fi
 
 # 3. Check if we are in the project root
 if [ ! -f "Cargo.toml" ]; then
@@ -52,55 +54,63 @@ fi
 echo "Compiling ArcadeMatrix Rust binary (release mode)..."
 cargo build --release
 
-sudo cp target/release/arcadematrix /usr/local/bin/arcadematrix
-sudo chmod +x /usr/local/bin/arcadematrix
+if [ -w "/usr/local/bin" ]; then
+    cp target/release/arcadematrix /usr/local/bin/arcadematrix
+    chmod +x /usr/local/bin/arcadematrix
+else
+    sudo cp target/release/arcadematrix /usr/local/bin/arcadematrix || cp target/release/arcadematrix ./arcadematrix
+fi
 
-# 5. Anti-Flicker Performance Tweaks (Disable Audio)
-echo "Applying anti-flicker optimizations (Disabling Onboard Audio)..."
+# 5. Anti-Flicker Performance Tweaks (Disable Audio - Raspberry Pi only)
+if [ -d "/boot" ] || [ -d "/boot/firmware" ]; then
+    echo "Applying anti-flicker optimizations (Disabling Onboard Audio)..."
 
-# Blacklist sound module
-sudo bash -c "cat > /etc/modprobe.d/snd-blacklist.conf << EOF
+    # Blacklist sound module
+    if [ -d "/etc/modprobe.d" ]; then
+        sudo bash -c "cat > /etc/modprobe.d/snd-blacklist.conf << EOF
 blacklist snd_bcm2835
 EOF"
+    fi
 
-# Disable audio in config.txt (handling both older OS and Bookworm paths)
-CONFIG_TXT="/boot/config.txt"
-if [ -f "/boot/firmware/config.txt" ]; then
-    CONFIG_TXT="/boot/firmware/config.txt"
+    # Disable audio in config.txt (handling both older OS and Bookworm paths)
+    CONFIG_TXT="/boot/config.txt"
+    if [ -f "/boot/firmware/config.txt" ]; then
+        CONFIG_TXT="/boot/firmware/config.txt"
+    fi
+
+    if [ -f "$CONFIG_TXT" ]; then
+        if grep -q "dtparam=audio=on" "$CONFIG_TXT"; then
+            sudo sed -i 's/dtparam=audio=on/dtparam=audio=off/g' "$CONFIG_TXT"
+            echo "Disabled audio in $CONFIG_TXT"
+        elif ! grep -q "dtparam=audio=off" "$CONFIG_TXT"; then
+            echo "dtparam=audio=off" | sudo tee -a "$CONFIG_TXT" > /dev/null
+        fi
+
+        # Disable HDMI audio loaded by vc4 driver which causes PWM conflicts
+        if grep -q "dtoverlay=vc4-kms-v3d$" "$CONFIG_TXT"; then
+            sudo sed -i 's/dtoverlay=vc4-kms-v3d$/dtoverlay=vc4-kms-v3d,noaudio/g' "$CONFIG_TXT"
+            echo "Disabled vc4 HDMI audio in $CONFIG_TXT"
+        fi
+    fi
+
+    CMDLINE_TXT="/boot/cmdline.txt"
+    if [ -f "/boot/firmware/cmdline.txt" ]; then
+        CMDLINE_TXT="/boot/firmware/cmdline.txt"
+    fi
+
+    if [ -f "$CMDLINE_TXT" ] && ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
+        sudo sed -i '1 s/$/ isolcpus=3/' "$CMDLINE_TXT"
+        echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
+    fi
 fi
 
-if grep -q "dtparam=audio=on" "$CONFIG_TXT"; then
-    sudo sed -i 's/dtparam=audio=on/dtparam=audio=off/g' "$CONFIG_TXT"
-    echo "Disabled audio in $CONFIG_TXT"
-elif ! grep -q "dtparam=audio=off" "$CONFIG_TXT"; then
-    echo "dtparam=audio=off" | sudo tee -a "$CONFIG_TXT" > /dev/null
-fi
+# 6. Setup Systemd Service (Linux only)
+if command -v systemctl &> /dev/null; then
+    sudo systemctl disable triggerhappy 2>/dev/null || true
+    echo "Setting up systemd service for auto-start..."
+    SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
 
-# Disable HDMI audio loaded by vc4 driver which causes PWM conflicts
-if grep -q "dtoverlay=vc4-kms-v3d$" "$CONFIG_TXT"; then
-    sudo sed -i 's/dtoverlay=vc4-kms-v3d$/dtoverlay=vc4-kms-v3d,noaudio/g' "$CONFIG_TXT"
-    echo "Disabled vc4 HDMI audio in $CONFIG_TXT"
-fi
-
-# Isolate CPU core 3 for perfect LED matrix timing
-CMDLINE_TXT="/boot/cmdline.txt"
-if [ -f "/boot/firmware/cmdline.txt" ]; then
-    CMDLINE_TXT="/boot/firmware/cmdline.txt"
-fi
-
-if ! grep -q "isolcpus=" "$CMDLINE_TXT"; then
-    sudo sed -i '1 s/$/ isolcpus=3/' "$CMDLINE_TXT"
-    echo "Isolated CPU core 3 in $CMDLINE_TXT for LED matrix"
-fi
-
-# Disable triggerhappy service which is known to cause PWM flickering
-sudo systemctl disable triggerhappy 2>/dev/null || true
-
-# 6. Setup Systemd Service
-echo "Setting up systemd service for auto-start..."
-SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
-
-sudo bash -c "cat > $SERVICE_FILE << EOF
+    sudo bash -c "cat > $SERVICE_FILE << EOF
 [Unit]
 Description=ArcadeMatrix RPi Daemon (Rust)
 After=network.target
@@ -118,23 +128,11 @@ User=root
 WantedBy=multi-user.target
 EOF"
 
-sudo systemctl daemon-reload
-sudo systemctl enable arcadematrix.service
-sudo systemctl restart arcadematrix.service || echo "Warning: Could not start service (this is normal in chroot)"
+    sudo systemctl daemon-reload
+    sudo systemctl enable arcadematrix.service
+    sudo systemctl restart arcadematrix.service || echo "Warning: Could not start service (this is normal in chroot)"
+fi
 
-IP_ADDR=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo "======================================"
 echo "Installation Complete (Rust Mode)!"
-echo "The service has been enabled. You can check its status with:"
-echo "sudo systemctl status arcadematrix.service"
-echo ""
-if [ -n "$IP_ADDR" ]; then
-    echo "You can access the Web UI at: http://$IP_ADDR:8080"
-else
-    echo "You can access the Web UI at: http://<raspberry-pi-ip>:8080"
-fi
-echo "======================================"
-echo "⚠️ IMPORTANT: Audio has been disabled to prevent matrix flickering."
-echo "Please REBOOT your Raspberry Pi now to apply the hardware changes!"
-echo "Command: sudo reboot"
 echo "======================================"
