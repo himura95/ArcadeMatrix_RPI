@@ -29,3 +29,7 @@ data/
 # Temporary files
 .fuse_hidden*
 *.zip
+
+# Rust
+target/
+Cargo.lock.tmp

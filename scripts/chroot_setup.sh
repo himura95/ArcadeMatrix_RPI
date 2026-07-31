@@ -6,23 +6,15 @@ echo "🔧 [chroot] Starting ArcadeMatrix OS Setup via autoInstall.sh..."
 PROJ_DIR="/home/pi/ArcadeMatrix_RPi"
 cd $PROJ_DIR
 
-# 1. Run the base auto-installer
+# 1. Run the base auto-installer (Rust build & systemd setup)
 chmod +x autoInstall.sh
 ./autoInstall.sh
 
-# 2. Add extra Release-only steps (Obfuscation)
-echo "🔒 [chroot] Cythonizing source code for protection..."
-# Install Cython in venv
-./venv/bin/pip install Cython
-
-# Find all python files except main.py and compile them
-find api core engines -name "*.py" -type f | while read -r file; do
-    echo "Compiling $file..."
-    ./venv/bin/cythonize -i -3 "$file"
-    # Remove the original source and intermediate C files
-    rm "$file"
-    rm "${file%.py}.c" || true
-done
+# 2. Strip release binary to save space
+if [ -f "/usr/local/bin/arcadematrix" ]; then
+    echo "🔒 [chroot] Stripping Rust binary..."
+    strip /usr/local/bin/arcadematrix || true
+fi
 
 # 3. Add extra Release-only steps (DATA Partition)
 echo "🔗 [chroot] Configuring DATA partition..."

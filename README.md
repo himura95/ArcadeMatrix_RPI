@@ -2,7 +2,7 @@
 
 # ArcadeMatrix RPi 🍓👾
 
-A Python-based port of the **ArcadeMatrix** project, specifically designed to run on a **Raspberry Pi** connected to an RGB LED Matrix (HUB75) via the Adafruit HAT or Joy-IT hardware.
+A native **Rust** port of the **ArcadeMatrix** project, specifically designed to run on a **Raspberry Pi** connected to an RGB LED Matrix (HUB75) via the Adafruit HAT or Joy-IT hardware.
 
 This project replicates the awesome features of the ESP32 version while completely removing its hardware limitations.
 
@@ -12,20 +12,25 @@ This project replicates the awesome features of the ESP32 version while complete
 
 ## 🌟 Features (RPi Exclusives vs ESP32)
 
+* 🔄 **Over-The-Air (OTA) Firmware Update**: Update the single standalone Rust binary directly from the Web UI without re-flashing your SD Card image!
+* 🚀 **Rust Native Performance**: High-performance multi-threaded engine using Actix-web and image processing in pure compiled Rust with 0% idle CPU overhead.
 * **Dynamically Loadable Fonts (`.ttf`)**: No more hardcoded font files! Drop any `.ttf` or `.otf` font directly into the `fonts/` folder, and the Web UI will automatically list it for use on the Clock or Date.
 * **Unlimited Clock/Date Sizes & Offsets**: You are no longer restricted to Size 1, 2, or 3. You can set the size to any number, and position the text freely on massive matrix panels (e.g. 256x64).
 * **Massive Clock Selection**: Enjoy a variety of animated clocks including the classic Arcade, Binary, Cyberpunk, Flip, Word, and the brand new **Pac-Man**, **Tetris**, **SlotMachine**, and **Versus (Mugen)** clocks!
 * **True Matrix Digital Rain (Katakana)**: A completely custom, buttery smooth, genuine Matrix digital rain effect (`DotGothic16`) with falling half-width Katakana and "unlit LED" negative space text punching through the rain.
 * **Custom Smooth Gradients**: In addition to classic Publisher themes (Nintendo, Capcom, Sega...), you can now choose a **Custom Color / Gradient** theme and pick two colors to generate a dynamic gradient.
 * **Dynamic Image Playlists (GIF/PNG/JPG)**: Read actual `.gif` and `.png` files dynamically straight from the filesystem without SD card fragmentation issues.
-* **Python Power**: The entire engine, API, and frontend are served by Python (`Pillow` for drawing, `Flask` for the API), allowing for much faster modification.
 
 ---
 
-## 🚀 Hardware Requirements
+## 🚀 Hardware Requirements & Compatibility
 
-1. **Raspberry Pi**: Any model up to Pi 4 (Zero 2 W, Pi 3, Pi 4). 
-   *(⚠️ **Pi 5 Warning**: The hzeller rgb-led-matrix library does NOT support the Pi 5 natively via GPIO due to the new RP1 chip. You must use an active adapter board for Pi 5! Pi 4 or Zero 2W are highly recommended).*
+Thanks to the ultra-lightweight native Rust implementation (~5 MB binary, ~10 MB RAM, 0% idle CPU overhead), **ArcadeMatrix now fully supports older legacy Raspberry Pi hardware without stutter or dropped frames**:
+
+1. **Raspberry Pi**: 
+   - **Legacy / Single-Core**: Pi 1 (B, B+, A+), Pi Zero, Pi Zero W *(Fully supported with zero lag thanks to Rust!)*
+   - **Multi-Core**: Pi 2, Pi 3, Pi 4, Pi Zero 2 W *(Recommended)*
+   - *(⚠️ **Pi 5 Warning**: The hzeller rgb-led-matrix library does NOT support the Pi 5 natively via GPIO due to the new RP1 chip. You must use an active adapter board for Pi 5!).*
 2. **RGB LED Matrix**: HUB75 panels (e.g., 64x64, 128x32, 256x64).
 3. **Adafruit RGB Matrix HAT** (or Joy-IT, or custom wiring).
 4. **MicroSD Card** (16GB or larger recommended for the Pre-compiled Image).

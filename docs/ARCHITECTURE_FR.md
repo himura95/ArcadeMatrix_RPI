@@ -1,53 +1,55 @@
 🇬🇧 [English](ARCHITECTURE.md) | 🇫🇷 Français | 🇪🇸 [Español](ARCHITECTURE_ES.md)
 
-# Vue d'ensemble de l'architecture
+# Vue d'ensemble de l'architecture (Rust Engine & OTA)
 
-Ce document fournit une vue d'ensemble complète de l'architecture d'ArcadeMatrix sur Raspberry Pi. Il explique les décisions de conception principales, le pipeline de rendu, les modèles de threading et la philosophie générale du projet.
+Ce document fournit une vue d'ensemble complète de l'architecture d'ArcadeMatrix sur Raspberry Pi réécrit en **Rust natif**. Il explique les décisions de conception principales, le pipeline de rendu multi-threadé, le système de mises à jour OTA et la philosophie générale du projet.
 
 ---
 
 ## 1. Philosophie de base
 
-ArcadeMatrix est conçu pour piloter une matrice LED HUB75 à l'aide de la bibliothèque C++ `hzeller/rpi-rgb-led-matrix` via ses bindings Python. Les objectifs principaux sont :
-- **Rendu pixel-perfect :** prise en charge des polices bitmap `.bdf` nettes et des sprites précis.
-- **Modularité :** ajout facile de nouveaux thèmes visuels, horloges et sources de données.
-- **Réactivité :** une API Web rapide capable d'interrompre et de modifier l'affichage instantanément sans faire planter le pilote matériel.
+ArcadeMatrix est un exécutable Rust binaire natif conçu pour piloter une matrice LED HUB75 à l'aide du trait `MatrixBackend` et des bindings `rpi-led-matrix`. Les objectifs principaux sont :
+- **Rendu pixel-perfect :** prise en charge des polices bitmap `.bdf` nettes, polices `.ttf` et des sprites `.fgt` BGR565.
+- **Sécurisation & Performance :** 0% d'utilisation CPU au repos, zéro garbage collection, et un binaire statique unique d'environ 5 Mo.
+- **Mises à jour OTA sans re-flash :** endpoint `POST /api/update` permettant l'upload et le remplacement atomique du binaire à chaud depuis la Web UI.
 
 ---
 
-## 2. Le Rendering Pipeline
-
-Pour garder la base de code maintenable, nous séparons strictement la logique de *quoi* afficher de celle de *comment* le dessiner. 
+## 2. Le Rendering Pipeline (Rust & Actix-web)
 
 ### Diagramme de haut niveau
 
 ```mermaid
 graph TD
-    subgraph Data Layer
-        API[Flask Web API]
-        Config[conf.ini / ConfigLoader]
-        Time[System Time]
-        Network[Weather / MQTT APIs]
+    subgraph Data & API Layer
+        API[Actix-web REST API]
+        OTA[OTA Handler /api/update]
+        Config[conf.ini / Config Mutex]
+        Time[Chrono System Time]
+        Network[OpenWeather / MQTT Client]
     end
 
-    subgraph Engine Layer
-        Rot[RotationManager]
+    subgraph Engine Layer (Rust)
+        App[ArcadeMatrixApp]
+        Rot[RotationState]
         ClockE[ClockEngine]
         DateE[DateEngine]
         WeathE[WeatherEngine]
-        Rot --> ClockE & DateE & WeathE
+        App --> ClockE & DateE & WeathE & OTA
     end
 
-    subgraph Logic & Aesthetic Layer
-        ClockE -->|Theme ID 0-21| Renderers[Renderers: Cyberpunk, Flip, Matrix]
-        ClockE -->|Theme ID 22+| SpClocks[Specialized Clocks: Pong, Tetris, PacMan]
-        Renderers --> Pil[Pillow Image Canvas]
-        SpClocks --> Pil
+    subgraph Renderers & Matrix Abstraction
+        ClockE -->|Theme ID 0-21| Renderers[Base, Cyberpunk, Flip, TrueMatrix]
+        ClockE -->|Theme ID 22+| SpClocks[Pong, Tetris, Pacman, Versus, SlotMachine]
+        Renderers --> Trait[Trait MatrixBackend]
+        SpClocks --> Trait
     end
 
-    subgraph Hardware Layer
-        Pil --> Wrapper[MatrixWrapper]
-        Wrapper --> Hardware[HUB75 LED Matrix]
+    subgraph Hardware & Mock Layer
+        Trait -->|Linux ARM| Hardware[rpi-led-matrix C++ Binding]
+        Trait -->|Development| Mock[MockMatrix Canvas]
+    end
+```
     end
 
     API -.->|Updates| Config

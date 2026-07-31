@@ -254,12 +254,35 @@ paths:
         '200':
           description: Success
 
-  /api/marquee:
+  /api/version:
+    get:
+      tags:
+        - System
+      summary: Get Firmware Version
+      description: Returns the compiled firmware version, platform, architecture, and build timestamp.
+      responses:
+        '200':
+          description: Version object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                  platform:
+                    type: string
+                  arch:
+                    type: string
+                  build_date:
+                    type: string
+
+  /api/update:
     post:
       tags:
-        - Engines
-      summary: Stream Image Data
-      description: Pushes an image (multipart/form-data) directly to the matrix frame buffer.
+        - System
+      summary: Over-The-Air (OTA) Firmware Update
+      description: Uploads a new compiled binary executable to update the firmware and restarts the systemd daemon.
       requestBody:
         required: true
         content:
@@ -267,9 +290,12 @@ paths:
             schema:
               type: object
               properties:
-                image:
+                firmware:
                   type: string
                   format: binary
       responses:
         '200':
-          description: Image received and displayed.
+          description: Firmware updated successfully. Device restarting.
+        '400':
+          description: Invalid binary format or architecture mismatch.
+

@@ -1,6 +1,7 @@
 #!/bin/bash
-# ArcadeMatrix_RPi Auto-Installation Script (Non-Interactive)
+# ArcadeMatrix_RPi Auto-Installation Script (Non-Interactive / Rust Native)
 # Recommended OS: Raspberry Pi OS Lite (32-bit or 64-bit)
+set -e
 
 echo "======================================"
 echo "    ArcadeMatrix RPi Auto-Installer   "
@@ -21,59 +22,40 @@ fi
 # 2. Update and install dependencies
 echo "Updating packages and installing system dependencies..."
 sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-dev python3-pil python3-flask python3-venv git build-essential curl cython3 mosquitto mosquitto-clients python3-paramiko
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git build-essential curl mosquitto mosquitto-clients libssl-dev pkg-config
 
 # Configure Mosquitto to allow external anonymous connections (Required for Recalbox/Batocera)
 echo "Configuring Mosquitto MQTT Broker..."
 sudo bash -c 'echo -e "listener 1883 0.0.0.0\nallow_anonymous true" > /etc/mosquitto/conf.d/arcadematrix.conf'
 sudo systemctl restart mosquitto || true
-# Check if we are in the project root
-if [ ! -f "main.py" ]; then
-    echo "main.py not found. It looks like you ran this script standalone."
+
+# 3. Check if we are in the project root
+if [ ! -f "Cargo.toml" ]; then
+    echo "Cargo.toml not found. It looks like you ran this script standalone."
     echo "Cloning the ArcadeMatrix_RPI repository..."
     git clone https://github.com/red77290/ArcadeMatrix_RPI.git
     cd ArcadeMatrix_RPI || { echo "Failed to enter directory"; exit 1; }
 else
-    echo "Found main.py, proceeding with local files..."
+    echo "Found Cargo.toml, proceeding with local files..."
 fi
 
 CURRENT_DIR=$(pwd)
 
-# 3. Setup Python Virtual Environment
-echo "Setting up Python Virtual Environment..."
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-
-# 4. Configure Matrix Hardware (AUTO DEFAULTS)
-echo ""
-echo "--- MATRIX HARDWARE CONFIGURATION (AUTO) ---"
-MAPPING="regular"
-ROWS=32
-COLS=64
-CHAIN=1
-PARALLEL=1
-
-if [ ! -f "conf.ini" ]; then
-    echo "conf.ini not found. Please ensure it is present in the repository."
-else
-    echo "conf.ini found. Preserving existing configuration."
+# 4. Install Rust toolchain & Compile binary
+if ! command -v cargo &> /dev/null; then
+    echo "Installing Rust toolchain..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env" || true
+    export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
+echo "Compiling ArcadeMatrix Rust binary (release mode)..."
+cargo build --release
 
-# 5. Install hzeller's rgbmatrix library
-if [ ! -d "rpi-rgb-led-matrix" ]; then
-    echo "Cloning hzeller's rpi-rgb-led-matrix library..."
-    git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
-fi
+sudo cp target/release/arcadematrix /usr/local/bin/arcadematrix
+sudo chmod +x /usr/local/bin/arcadematrix
 
-echo "Compiling rgbmatrix library via scikit-build-core (this might take a few minutes)..."
-cd rpi-rgb-led-matrix
-# The library uses modern CMake via pyproject.toml now
-../venv/bin/pip install .
-cd ..
-
-
-# 6. Anti-Flicker Performance Tweaks (Disable Audio)
+# 5. Anti-Flicker Performance Tweaks (Disable Audio)
 echo "Applying anti-flicker optimizations (Disabling Onboard Audio)..."
 
 # Blacklist sound module
@@ -114,23 +96,23 @@ fi
 # Disable triggerhappy service which is known to cause PWM flickering
 sudo systemctl disable triggerhappy 2>/dev/null || true
 
-# 7. Setup Systemd Service
+# 6. Setup Systemd Service
 echo "Setting up systemd service for auto-start..."
 SERVICE_FILE="/etc/systemd/system/arcadematrix.service"
 
 sudo bash -c "cat > $SERVICE_FILE << EOF
 [Unit]
-Description=ArcadeMatrix RPi Daemon
+Description=ArcadeMatrix RPi Daemon (Rust)
 After=network.target
 
 [Service]
-ExecStart=$CURRENT_DIR/venv/bin/python $CURRENT_DIR/main.py
+ExecStart=/usr/local/bin/arcadematrix
 WorkingDirectory=$CURRENT_DIR
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
+RestartSec=3
 User=root
-# root is required to interact with GPIO for the LED Matrix
 
 [Install]
 WantedBy=multi-user.target
@@ -140,9 +122,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable arcadematrix.service
 sudo systemctl restart arcadematrix.service || echo "Warning: Could not start service (this is normal in chroot)"
 
-IP_ADDR=$(hostname -I | awk '{print $1}')
+IP_ADDR=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo "======================================"
-echo "Installation Complete (Auto Mode)!"
+echo "Installation Complete (Rust Mode)!"
 echo "The service has been enabled. You can check its status with:"
 echo "sudo systemctl status arcadematrix.service"
 echo ""
