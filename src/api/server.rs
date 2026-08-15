@@ -111,6 +111,23 @@ async fn get_settings(data: web::Data<AppState>) -> impl Responder {
         "crypto_cache_ttl_min": s.crypto_cache_ttl_min,
         "stock_symbols": s.stock_symbols.join(","),
         "stock_cache_ttl_min": s.stock_cache_ttl_min,
+        "youtube_api_key": s.youtube_api_key,
+        "youtube_channels": s.youtube_channels.join(","),
+        "youtube_duration_sec": s.youtube_duration_sec,
+        "youtube_cache_ttl_min": s.youtube_cache_ttl_min,
+        "youtube_font": s.youtube_font,
+        "music_enabled": s.music_enabled,
+        "music_server_url": s.music_server_url,
+        "music_duration_sec": s.music_duration_sec,
+        "music_font": s.music_font,
+        "music_artist_color": s.music_artist_color,
+        "music_title_color": s.music_title_color,
+        "music_time_color": s.music_time_color,
+        "music_bar_bg_color": s.music_bar_bg_color,
+        "music_bar_fg_color": s.music_bar_fg_color,
+        "countdown_events": s.countdown_events.join("\n"),
+        "countdown_duration_sec": s.countdown_duration_sec,
+        "countdown_font": s.countdown_font,
     }))
 }
 
@@ -303,6 +320,86 @@ async fn post_settings(
     }
     if let Some(v) = body.get("stock_cache_ttl_min").and_then(|v| v.as_u64()) {
         s.stock_cache_ttl_min = v as u32;
+    }
+	
+	// YouTube settings
+    if let Some(v) = body.get("youtube_api_key").and_then(|v| v.as_str()) {
+        s.youtube_api_key = v.to_string();
+    }
+    if let Some(v) = body.get("youtube_channels") {
+        if let Some(channels_str) = v.as_str() {
+            s.youtube_channels = channels_str
+                .split(',')
+                .map(|item| item.trim().to_string())
+                .filter(|item| !item.is_empty())
+                .collect();
+            tracing::info!(
+                "YouTube channels updated: {:?}",
+                s.youtube_channels
+            );
+        } else {
+            tracing::warn!(
+                "youtube_channels field is not a string: {:?}",
+                v
+            );
+        }
+    } else {
+        tracing::warn!("youtube_channels field missing from request");
+    }
+    if let Some(v) = body.get("youtube_duration_sec").and_then(|v| v.as_u64()) {
+        s.youtube_duration_sec = v as u32;
+    }
+    if let Some(v) = body.get("youtube_cache_ttl_min").and_then(|v| v.as_u64()) {
+        s.youtube_cache_ttl_min = v as u32;
+    }
+    if let Some(v) = body.get("youtube_font").and_then(|v| v.as_str()) {
+        s.youtube_font = v.to_string();
+    }
+
+    // Countdown settings
+    if let Some(v) = body.get("countdown_events") {
+        if let Some(events_str) = v.as_str() {
+            s.countdown_events = events_str
+                .split(|c| c == ',' || c == '\n' || c == '\r')
+                .map(|e| e.trim().to_string())
+                .filter(|e| !e.is_empty())
+                .collect();
+        }
+    }
+    if let Some(v) = body.get("countdown_duration_sec").and_then(|v| v.as_u64()) {
+        s.countdown_duration_sec = v as u32;
+    }
+    if let Some(v) = body.get("countdown_font").and_then(|v| v.as_str()) {
+        s.countdown_font = v.to_string();
+    }
+
+    // Music settings
+    if let Some(v) = body.get("music_enabled").and_then(|v| v.as_bool()) {
+        s.music_enabled = v;
+    }
+    if let Some(v) = body.get("music_server_url").and_then(|v| v.as_str()) {
+        s.music_server_url = v.to_string();
+    }
+    if let Some(v) = body.get("music_duration_sec").and_then(|v| v.as_u64()) {
+        s.music_duration_sec = v as u32;
+    }
+    if let Some(v) = body.get("music_font").and_then(|v| v.as_str()) {
+        s.music_font = v.to_string();
+    }
+    if let Some(v) = body.get("music_artist_color").and_then(|v| v.as_str()) {
+        s.music_artist_color = v.to_string();
+    }
+    if let Some(v) = body.get("music_title_color").and_then(|v| v.as_str()) {
+        s.music_title_color = v.to_string();
+    }
+    if let Some(v) = body.get("music_time_color").and_then(|v| v.as_str()) {
+        s.music_time_color = v.to_string();
+    }
+    if let Some(v) = body.get("music_bar_bg_color").and_then(|v| v.as_str()) {
+        s.music_bar_bg_color = v.to_string();
+    }
+    if let Some(v) = body.get("music_bar_fg_color").and_then(|v| v.as_str()) {
+        s.music_bar_fg_color = v.to_string();
     }
 
     // Standby / Night mode

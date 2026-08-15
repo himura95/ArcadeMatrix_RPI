@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    input {
+      width: 100%;
+      margin: 5px 0;
+      padding: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h3>ArcadeMatrix Music Sender</h3>
+  <div>
+    <label>Server IP:</label>
+    <input type="text" id="server-ip" placeholder="192.168.1.100">
+  </div>
+  <div>
+    <label>Port:</label>
+    <input type="text" id="server-port" value="8085">
+  </div>
+  <button id="save-btn">Save Configuration</button>
+  <button id="test-btn">Test Connection</button>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

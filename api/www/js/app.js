@@ -350,10 +350,28 @@ async function initSettings() {
     const fonts = await API.get('/api/fonts');
     const clockFontSel = document.getElementById('cfg-clock-font');
     const dateFontSel = document.getElementById('cfg-date-font');
+    const youtubeFontSel = document.getElementById('cfg-youtube-font');
+    const countdownFontSel = document.getElementById('cfg-countdown-font');
+    const musicFontSel = document.getElementById('cfg-music-font');
     if (clockFontSel && dateFontSel) {
       fonts.forEach(f => {
         clockFontSel.add(new Option(f, f));
         dateFontSel.add(new Option(f, f));
+      });
+    }
+    if (youtubeFontSel) {
+      fonts.forEach(f => {
+        youtubeFontSel.add(new Option(f, f));
+      });
+    }
+    if (countdownFontSel) {
+      fonts.forEach(f => {
+        countdownFontSel.add(new Option(f, f));
+      });
+    }
+    if (musicFontSel) {
+      fonts.forEach(f => {
+        musicFontSel.add(new Option(f, f));
       });
     }
   } catch (e) {
@@ -372,6 +390,13 @@ async function initSettings() {
       sliderBright.addEventListener('input', (e) => {
         document.getElementById('val-brightness').textContent = e.target.value;
       });
+
+      const sliderNightBright = document.getElementById('cfg-night-brightness');
+      if (sliderNightBright) {
+        sliderNightBright.addEventListener('input', (e) => {
+          document.getElementById('val-night-brightness').textContent = e.target.value;
+        });
+      }
       sliderBright.addEventListener('change', async (e) => {
         await API.post('/api/settings', { brightness_limit: parseInt(e.target.value) });
         window.showToast('Brightness updated', 'info');
@@ -441,6 +466,33 @@ async function initSettings() {
     if (document.getElementById('cfg-stock-symbols')) document.getElementById('cfg-stock-symbols').value = s.stock_symbols || 'AAPL,NVDA,TSLA,MSFT';
     if (document.getElementById('cfg-dur-stock')) document.getElementById('cfg-dur-stock').value = s.stock_duration_sec || 5;
     if (document.getElementById('cfg-cache-stock')) document.getElementById('cfg-cache-stock').value = s.stock_cache_ttl_min || 1;
+	
+	// Youtube
+	if (document.getElementById('cfg-youtube-api-key')) document.getElementById('cfg-youtube-api-key').value = s.youtube_api_key || '';
+     if (document.getElementById('cfg-youtube-channels')) document.getElementById('cfg-youtube-channels').value = typeof s.youtube_channels === 'string' ? s.youtube_channels : (s.youtube_channels || []).join(',');
+     if (document.getElementById('cfg-youtube-duration')) document.getElementById('cfg-youtube-duration').value = s.youtube_duration_sec || 15;
+     if (document.getElementById('cfg-cache-youtube')) document.getElementById('cfg-cache-youtube').value = s.youtube_cache_ttl_min || 5;
+     if (document.getElementById('cfg-youtube-font')) document.getElementById('cfg-youtube-font').value = s.youtube_font || 'PressStart2P.ttf';
+
+    // Music
+    if (document.getElementById('cfg-music-enabled')) document.getElementById('cfg-music-enabled').checked = s.music_enabled;
+    if (document.getElementById('cfg-music-server-url')) document.getElementById('cfg-music-server-url').value = s.music_server_url || 'http://192.168.1.100:8085';
+    if (document.getElementById('cfg-music-duration')) document.getElementById('cfg-music-duration').value = s.music_duration_sec || 15;
+    if (document.getElementById('cfg-music-font')) document.getElementById('cfg-music-font').value = s.music_font || 'PressStart2P.ttf';
+    if (document.getElementById('cfg-music-artist-color')) document.getElementById('cfg-music-artist-color').value = s.music_artist_color || '#ffffff';
+    if (document.getElementById('cfg-music-title-color')) document.getElementById('cfg-music-title-color').value = s.music_title_color || '#c8c8c8';
+    if (document.getElementById('cfg-music-time-color')) document.getElementById('cfg-music-time-color').value = s.music_time_color || '#ffffff';
+    if (document.getElementById('cfg-music-bar-bg-color')) document.getElementById('cfg-music-bar-bg-color').value = s.music_bar_bg_color || '#3c3c3c';
+    if (document.getElementById('cfg-music-bar-fg-color')) document.getElementById('cfg-music-bar-fg-color').value = s.music_bar_fg_color || '#ffd700';
+
+    // Countdown
+    if (document.getElementById('cfg-countdown-events')) {
+      const events = typeof s.countdown_events === 'string' ? s.countdown_events.replace(/,/g, '\n') : (s.countdown_events || []).join('\n');
+      document.getElementById('cfg-countdown-events').value = events;
+    }
+    if (document.getElementById('cfg-countdown-duration')) document.getElementById('cfg-countdown-duration').value = s.countdown_duration_sec || 15;
+    if (document.getElementById('cfg-countdown-font')) document.getElementById('cfg-countdown-font').value = s.countdown_font || 'PressStart2P.ttf';
+    if (document.getElementById('cfg-dur-countdown')) document.getElementById('cfg-dur-countdown').value = s.countdown_duration_sec || 15;
 
     // Rotation
     document.getElementById('cfg-rotation').value = s.rotation;
@@ -459,6 +511,10 @@ async function initSettings() {
     document.getElementById('cfg-night-enable').value = s.night_mode_enabled ? 'true' : 'false';
     document.getElementById('cfg-night-off').value = s.turn_off_at;
     document.getElementById('cfg-night-on').value = s.wake_up_at;
+    if (document.getElementById('cfg-night-brightness')) {
+      document.getElementById('cfg-night-brightness').value = s.matrix_brightness_night || 0;
+      document.getElementById('val-night-brightness').textContent = s.matrix_brightness_night || 0;
+    }
 
   } catch (e) {
     console.error('Failed to load settings', e);
@@ -507,6 +563,26 @@ async function initSettings() {
             stock_symbols: document.getElementById('cfg-stock-symbols') ? document.getElementById('cfg-stock-symbols').value : 'AAPL,NVDA,TSLA,MSFT',
             stock_duration_sec: parseInt(document.getElementById('cfg-dur-stock')?.value) || 5,
             stock_cache_ttl_min: parseInt(document.getElementById('cfg-cache-stock')?.value) || 1,
+			
+            youtube_api_key: document.getElementById('cfg-youtube-api-key')?.value || '',
+             youtube_channels: document.getElementById('cfg-youtube-channels')?.value || '',
+             youtube_duration_sec: parseInt(document.getElementById('cfg-youtube-duration')?.value) || 15,
+             youtube_cache_ttl_min: parseInt(document.getElementById('cfg-cache-youtube')?.value) || 5,
+             youtube_font: document.getElementById('cfg-youtube-font')?.value || 'PressStart2P.ttf',
+
+            music_enabled: document.getElementById('cfg-music-enabled')?.checked || false,
+            music_server_url: document.getElementById('cfg-music-server-url')?.value || 'http://192.168.1.100:8085',
+            music_duration_sec: parseInt(document.getElementById('cfg-music-duration')?.value) || 15,
+            music_font: document.getElementById('cfg-music-font')?.value || 'PressStart2P.ttf',
+            music_artist_color: document.getElementById('cfg-music-artist-color')?.value || '#ffffff',
+            music_title_color: document.getElementById('cfg-music-title-color')?.value || '#c8c8c8',
+            music_time_color: document.getElementById('cfg-music-time-color')?.value || '#ffffff',
+            music_bar_bg_color: document.getElementById('cfg-music-bar-bg-color')?.value || '#3c3c3c',
+            music_bar_fg_color: document.getElementById('cfg-music-bar-fg-color')?.value || '#ffd700',
+
+            countdown_events: document.getElementById('cfg-countdown-events')?.value || '',
+            countdown_duration_sec: parseInt(document.getElementById('cfg-countdown-duration')?.value) || (parseInt(document.getElementById('cfg-dur-countdown')?.value) || 15),
+            countdown_font: document.getElementById('cfg-countdown-font')?.value || 'PressStart2P.ttf',
 
             rotation: selectedRotations,
             clock_duration_sec: parseInt(document.getElementById('cfg-dur-clock').value) || 10,
@@ -519,6 +595,7 @@ async function initSettings() {
           night_mode_enabled: document.getElementById('cfg-night-enable').value === 'true',
           turn_off_at: document.getElementById('cfg-night-off').value,
           wake_up_at: document.getElementById('cfg-night-on').value,
+          matrix_brightness_night: parseInt(document.getElementById('cfg-night-brightness')?.value ?? 0),
         };
         await API.post('/api/settings', payload);
         window.showToast('Display settings saved!', 'success');

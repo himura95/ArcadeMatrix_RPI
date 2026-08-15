@@ -6,6 +6,7 @@ use crate::core::matrix::{MatrixBackend, MockMatrix};
 use crate::core::rotation::RotationState;
 
 use crate::engines::clock::ClockEngine;
+use crate::engines::countdown::CountdownEngine;
 use crate::engines::date::DateEngine;
 use crate::engines::fighter::FighterEngine;
 use crate::engines::gif::GifEngine;
@@ -36,7 +37,12 @@ pub struct ArcadeMatrixApp {
 
 impl ArcadeMatrixApp {
     pub fn new() -> Self {
-        let config = Arc::new(Config::new("conf.ini"));
+        // Resolve to absolute path so save() writes to the correct location
+        let config_path = std::env::current_dir()
+            .ok()
+            .and_then(|cwd| cwd.join("conf.ini").canonicalize().ok())
+            .unwrap_or_else(|| std::path::PathBuf::from("conf.ini"));
+        let config = Arc::new(Config::new(&config_path));
         Self { config }
     }
 
@@ -374,6 +380,9 @@ impl ArcadeMatrixApp {
         stock_engine.add_provider(Box::new(crate::api::YahooFinanceProvider));
         let mut gif_engine = GifEngine::new(width, height);
         let mut fighter_engine = FighterEngine::new(width, height);
+        let mut youtube_engine = crate::engines::youtube::YouTubeEngine::new();
+        let mut music_engine = crate::engines::music::MusicEngine::new();
+        let mut countdown_engine = CountdownEngine::new();
         let marquee_engine = MarqueeEngine::new();
         let mut message_engine = MessageEngine::new();
 
@@ -455,12 +464,11 @@ impl ArcadeMatrixApp {
                 continue;
             }
 
-            // Handle forced engine (Custom Message, Marquee Image)
-            let forced = config.force_engine.lock().clone();
-            if let Some(ref mode) = forced {
-                *config.force_engine.lock() = None;
-
-                if mode == "message" {
+            // Handle forced engine (Game Marquee, Custom Message, etc.)
+            let forced_opt = config.force_engine.lock().clone();
+            if let Some(ref forced_mode) = forced_opt {
+                if forced_mode == "message" {
+                    *config.force_engine.lock() = None; // Messages are one-shot
                     let payload_val_opt = config.message_payload.lock().clone();
                     if let Some(payload_val) = payload_val_opt {
                         if let Ok(payload) =
@@ -476,7 +484,10 @@ impl ArcadeMatrixApp {
                                 if config.reload_flag.load(Ordering::Relaxed) {
                                     break;
                                 }
-                                if config.force_engine.lock().is_some() {
+                                let current_forced = config.force_engine.lock().clone();
+                                if current_forced.is_some()
+                                    && current_forced.as_deref() != Some("message")
+                                {
                                     break;
                                 }
 
@@ -496,22 +507,14 @@ impl ArcadeMatrixApp {
                             continue;
                         }
                     }
-                } else if mode == "marquee" {
+                } else if forced_mode == "marquee" {
+                    // Active Game Marquee persists as long as force_engine is Some("marquee")
                     let img_opt = config.image_obj.lock().clone();
                     if let Some(img) = img_opt {
-                        while !config.reload_flag.load(Ordering::Relaxed)
-                            && running.load(Ordering::SeqCst)
-                        {
-                            if config.force_engine.lock().is_some() {
-                                break;
-                            }
-
-                            matrix.clear();
-                            marquee_engine.render(matrix.as_mut(), &img);
-                            matrix.update();
-                            std::thread::sleep(std::time::Duration::from_millis(100));
-                        }
-
+                        matrix.clear();
+                        marquee_engine.render(matrix.as_mut(), &img);
+                        matrix.update();
+                        std::thread::sleep(std::time::Duration::from_millis(50));
                         last_frame = std::time::Instant::now();
                         rotation_state.mode_start_time = std::time::Instant::now();
                         continue;
@@ -519,35 +522,38 @@ impl ArcadeMatrixApp {
                 }
             }
 
-            // MQTT mode: dedicated DMD for Recalbox/Batocera (only when no active game event)
-            let mqtt_enabled = config.settings.read().mqtt_enabled;
-            if mqtt_enabled {
-                let current_force = config.force_engine.lock().clone();
-                if current_force.is_none() {
-                    matrix.clear();
-                    let payload = crate::engines::message::MessagePayload::new(
-                        "Waiting for Content...".to_string(),
-                        "#ff8c00",
-                        if matrix.height() >= 64 { 2 } else { 1 },
-                        "left",
-                        60, // Arbitrary for idle
-                    );
-                    let _ = message_engine.render(matrix.as_mut(), &payload);
-                    matrix.update();
-                    last_frame = std::time::Instant::now();
-                    std::thread::sleep(std::time::Duration::from_millis(33));
-                    continue;
-                }
+            // Check if MQTT mode is enabled and no game marquee is active:
+            // Display "WAITING FOR MARQUEE" banner in white and suspend idle rotation (matching ESP32 behavior)
+            let mqtt_enabled = { config.settings.read().mqtt_enabled };
+            if mqtt_enabled && forced_opt.is_none() {
+                let msg_payload = crate::engines::message::MessagePayload::new(
+                    "WAITING FOR MARQUEE".to_string(),
+                    "#ffffff",
+                    1,
+                    "none",
+                    5,
+                );
+                matrix.clear();
+                message_engine.reset(matrix.width() as f32);
+                message_engine.render(matrix.as_mut(), &msg_payload);
+                matrix.update();
+                std::thread::sleep(std::time::Duration::from_millis(50));
+                last_frame = std::time::Instant::now();
+                rotation_state.mode_start_time = std::time::Instant::now();
+                continue;
             }
 
             // Rotation sequence execution
-            let (idle_list, clock_dur, date_dur, weather_dur) = {
+            let (idle_list, clock_dur, date_dur, weather_dur, youtube_dur, countdown_dur, music_dur) = {
                 let s = config.settings.read();
                 (
                     s.idle_rotation.clone(),
                     s.idle_clock_duration_sec,
                     s.idle_date_duration_sec,
                     s.idle_weather_duration_sec,
+                    s.youtube_duration_sec,
+                    s.countdown_duration_sec,
+                    s.music_duration_sec,
                 )
             };
 
@@ -599,6 +605,30 @@ impl ArcadeMatrixApp {
                             rotation_state.next_mode(&idle_list);
                         }
                     }
+					"youtube" => {
+                        youtube_engine.render(matrix.as_mut(), &config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(youtube_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    "countdown" => {
+                        countdown_engine.render(matrix.as_mut(), &config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(countdown_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
+                    "music" => {
+                        music_engine.render(matrix.as_mut(), &config);
+                        if rotation_state.mode_start_time.elapsed()
+                            >= std::time::Duration::from_secs(music_dur as u64)
+                        {
+                            rotation_state.next_mode(&idle_list);
+                        }
+                    }
                     "gifs" => {
                         let gifs_count = config.settings.read().idle_gifs_count as u32;
 
@@ -629,7 +659,14 @@ impl ArcadeMatrixApp {
                         if gif_engine.has_finished_loops(1) || gif_engine.is_empty() {
                             gifs_played += 1;
                             if gifs_played >= gifs_count {
-                                rotation_state.next_mode(&idle_list);
+                                gifs_played = 0;
+                                let next_mode_opt = rotation_state.next_mode(&idle_list);
+                                if next_mode_opt == Some("gifs") {
+                                    let selected = config.settings.read().selected_gifs.clone();
+                                    if !gif_engine.play_random_playlist_gif(&selected) {
+                                        gifs_played = gifs_count; // Force advance if failed
+                                    }
+                                }
                             } else {
                                 let selected = config.settings.read().selected_gifs.clone();
                                 if !gif_engine.play_random_playlist_gif(&selected) {
@@ -694,9 +731,9 @@ impl ArcadeMatrixApp {
                 }
                 last_index = current_index;
 
-                // Composite fighter overlay
+                // Composite fighter overlay (strictly disabled during GIF rotation)
                 let settings = config.settings.read();
-                let fighter_enabled = settings.idle_fighter_enabled;
+                let fighter_enabled = settings.idle_fighter_enabled && current_mode.as_str() != "gifs";
                 if fighter_enabled {
                     fighter_engine.set_interval(settings.idle_fighter_interval);
                     fighter_engine.composite(matrix.as_mut());

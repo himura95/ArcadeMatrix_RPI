@@ -4,6 +4,14 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU32};
 
+pub fn parse_symbols_string(input: &str) -> Vec<String> {
+    input
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigSettings {
     // MATRIX
@@ -68,6 +76,29 @@ pub struct ConfigSettings {
     pub crypto_cache_ttl_min: u32,
     pub stock_symbols: Vec<String>,
     pub stock_cache_ttl_min: u32,
+	
+    // YOUTUBE
+    pub youtube_api_key: String,
+    pub youtube_channels: Vec<String>,
+    pub youtube_duration_sec: u32,
+    pub youtube_cache_ttl_min: u32,
+    pub youtube_font: String,
+
+    // MUSIC
+    pub music_enabled: bool,
+    pub music_server_url: String,
+    pub music_duration_sec: u32,
+    pub music_font: String,
+    pub music_artist_color: String,
+    pub music_title_color: String,
+    pub music_time_color: String,
+    pub music_bar_bg_color: String,
+    pub music_bar_fg_color: String,
+
+    // COUNTDOWN
+    pub countdown_events: Vec<String>,
+    pub countdown_duration_sec: u32,
+    pub countdown_font: String,
 
     // STANDBY / NIGHT
     pub standby_enabled: bool,
@@ -167,6 +198,26 @@ impl Default for ConfigSettings {
                 "MSFT".to_string(),
             ],
             stock_cache_ttl_min: 1,
+			
+            youtube_api_key: "".to_string(),
+            youtube_channels: vec![],
+            youtube_duration_sec: 15,
+            youtube_cache_ttl_min: 5,
+            youtube_font: "PressStart2P.ttf".to_string(),
+
+            music_enabled: false,
+            music_server_url: "http://192.168.1.100:8085".to_string(),
+            music_duration_sec: 15,
+            music_font: "PressStart2P.ttf".to_string(),
+            music_artist_color: "#ffffff".to_string(),
+            music_title_color: "#c8c8c8".to_string(),
+            music_time_color: "#ffffff".to_string(),
+            music_bar_bg_color: "#3c3c3c".to_string(),
+            music_bar_fg_color: "#ffd700".to_string(),
+
+            countdown_events: vec![],
+            countdown_duration_sec: 15,
+            countdown_font: "PressStart2P.ttf".to_string(),
 
             standby_enabled: false,
             standby_turn_off: "23:00".to_string(),
@@ -229,6 +280,7 @@ impl Config {
         }
 
         let mut ini = Ini::new();
+		ini.set_comment_symbols(&[';']);
         if ini.load(path).is_err() {
             return;
         }
@@ -314,7 +366,7 @@ impl Config {
         if let Ok(Some(val)) = ini.getint("TIME", "CLOCK_OFFSET_Y") {
             settings.time_offset_y = val as i32;
         }
-        if let Some(v) = ini.get("TIME", "NTP_SERVER") {
+        if let Some(v) = ini.get("TIME", "NTP_SERVER").or_else(|| ini.get("TIME", "NTPSERVER")) {
             settings.ntp_server = v;
         }
         if let Some(v) = ini.get("TIME", "TIMEZONE") {
@@ -445,6 +497,71 @@ impl Config {
         {
             settings.stock_cache_ttl_min = val as u32;
         }
+		
+		// YOUTUBE
+        if let Some(v) = ini.get("YOUTUBE", "API_KEY") {
+            settings.youtube_api_key = v;
+        }
+        if let Some(v) = ini.get("YOUTUBE", "CHANNELS") {
+            settings.youtube_channels = v
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+        }
+        if let Ok(Some(val)) = ini.getuint("YOUTUBE", "DURATION_SEC") {
+            settings.youtube_duration_sec = val as u32;
+        }
+        if let Ok(Some(val)) = ini.getuint("YOUTUBE", "CACHE_TTL_MIN") {
+            settings.youtube_cache_ttl_min = val as u32;
+        }
+        if let Some(v) = ini.get("YOUTUBE", "FONT") {
+            settings.youtube_font = v;
+        }
+
+        // MUSIC
+        if let Ok(Some(val)) = ini.getbool("MUSIC", "ENABLED") {
+            settings.music_enabled = val;
+        }
+        if let Some(v) = ini.get("MUSIC", "SERVER_URL") {
+            settings.music_server_url = v;
+        }
+        if let Ok(Some(val)) = ini.getuint("MUSIC", "DURATION_SEC") {
+            settings.music_duration_sec = val as u32;
+        }
+        if let Some(v) = ini.get("MUSIC", "FONT") {
+            settings.music_font = v;
+        }
+        if let Some(v) = ini.get("MUSIC", "ARTIST_COLOR") {
+            settings.music_artist_color = v;
+        }
+        if let Some(v) = ini.get("MUSIC", "TITLE_COLOR") {
+            settings.music_title_color = v;
+        }
+        if let Some(v) = ini.get("MUSIC", "TIME_COLOR") {
+            settings.music_time_color = v;
+        }
+        if let Some(v) = ini.get("MUSIC", "BAR_BG_COLOR") {
+            settings.music_bar_bg_color = v;
+        }
+        if let Some(v) = ini.get("MUSIC", "BAR_FG_COLOR") {
+            settings.music_bar_fg_color = v;
+        }
+
+        // COUNTDOWN
+        if let Some(v) = ini.get("COUNTDOWN", "EVENTS") {
+            settings.countdown_events = v
+                .split(|c| c == ',' || c == '\n' || c == '\r')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+        }
+        if let Ok(Some(val)) = ini.getuint("COUNTDOWN", "DURATION_SEC") {
+            settings.countdown_duration_sec = val as u32;
+        }
+        if let Some(v) = ini.get("COUNTDOWN", "FONT") {
+            settings.countdown_font = v;
+        }
 
         // STANDBY
         if let Ok(Some(val)) = ini.getbool("STANDBY", "NIGHT_MODE_ENABLED") {
@@ -503,6 +620,8 @@ impl Config {
     pub fn save(&self) -> bool {
         let file_path = self.config_file.lock().clone();
         let s = self.settings.read().clone();
+
+        tracing::info!("Saving config to: {:?}", file_path);
 
         let mut ini = Ini::new();
 
@@ -630,6 +749,38 @@ impl Config {
             "CACHE_TTL_MIN",
             Some(s.stock_cache_ttl_min.to_string()),
         );
+		
+		ini.set("YOUTUBE", "API_KEY", Some(s.youtube_api_key));
+        ini.set("YOUTUBE", "CHANNELS", Some(s.youtube_channels.join(",")));
+        ini.set(
+            "YOUTUBE",
+            "DURATION_SEC",
+            Some(s.youtube_duration_sec.to_string()),
+        );
+        ini.set(
+            "YOUTUBE",
+            "CACHE_TTL_MIN",
+            Some(s.youtube_cache_ttl_min.to_string()),
+        );
+        ini.set("YOUTUBE", "FONT", Some(s.youtube_font));
+
+        ini.set("MUSIC", "ENABLED", Some(s.music_enabled.to_string()));
+        ini.set("MUSIC", "SERVER_URL", Some(s.music_server_url));
+        ini.set("MUSIC", "DURATION_SEC", Some(s.music_duration_sec.to_string()));
+        ini.set("MUSIC", "FONT", Some(s.music_font));
+        ini.set("MUSIC", "ARTIST_COLOR", Some(s.music_artist_color));
+        ini.set("MUSIC", "TITLE_COLOR", Some(s.music_title_color));
+        ini.set("MUSIC", "TIME_COLOR", Some(s.music_time_color));
+        ini.set("MUSIC", "BAR_BG_COLOR", Some(s.music_bar_bg_color));
+        ini.set("MUSIC", "BAR_FG_COLOR", Some(s.music_bar_fg_color));
+
+        ini.set("COUNTDOWN", "EVENTS", Some(s.countdown_events.join(",")));
+        ini.set(
+            "COUNTDOWN",
+            "DURATION_SEC",
+            Some(s.countdown_duration_sec.to_string()),
+        );
+        ini.set("COUNTDOWN", "FONT", Some(s.countdown_font));
 
         ini.set(
             "STANDBY",
@@ -662,6 +813,34 @@ impl Config {
             Some(s.wifi_disable_internal.to_string()),
         );
 
-        ini.write(&file_path).is_ok()
+        match ini.write(&file_path) {
+            Ok(()) => {
+                tracing::info!("Config saved successfully to {:?}", file_path);
+                true
+            }
+            Err(e) => {
+                tracing::error!("Failed to save config to {:?}: {}", file_path, e);
+                false
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_hex_color_comment_parsing() {
+        let ini_str = r#"
+[TIME]
+CLOCK_COLOR_1 = #ff0000 ; primary color comment
+CLOCK_COLOR_2 = #00ff00
+NTP_SERVER = pool.ntp.org
+"#;
+        let mut ini = configparser::ini::Ini::new();
+        ini.set_comment_symbols(&[';']);
+        let map = ini.read(ini_str.to_string()).unwrap();
+        assert_eq!(ini.get("TIME", "CLOCK_COLOR_1").unwrap(), "#ff0000");
+        assert_eq!(ini.get("TIME", "CLOCK_COLOR_2").unwrap(), "#00ff00");
     }
 }

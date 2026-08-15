@@ -6,6 +6,7 @@ pub mod ota;
 pub mod server;
 pub mod stock_provider;
 pub mod weather_provider;
+pub mod youtube;
 pub mod yahoo_finance;
 
 pub use binance::BinanceProvider;

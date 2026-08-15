@@ -14,6 +14,7 @@
   <style>
     .form-grid.col-3 { grid-template-columns: repeat(3, 1fr); }
     .form-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
+    .form-grid.col-5 { grid-template-columns: repeat(5, 1fr); }
   </style>
 </head>
 <body>
@@ -74,7 +75,7 @@
             </div>
             <div class="slider-group" style="margin-top: 1.5rem;">
               <label>Matrix Brightness (<span id="val-brightness">40</span>%)</label>
-              <input type="range" id="slider-brightness" min="1" max="100" value="40">
+              <input type="range" id="slider-brightness" min="0" max="100" value="40">
             </div>
           </div>
 
@@ -128,7 +129,10 @@
           <button class="tab-btn" onclick="switchDisplayTab('weather')">☁️ Weather</button>
           <button class="tab-btn" onclick="switchDisplayTab('crypto')">📈 Crypto</button>
           <button class="tab-btn" onclick="switchDisplayTab('stock')">📊 Stocks</button>
-          <button class="tab-btn" onclick="switchDisplayTab('idle')">🔄 Idle & Night</button>
+		  <button class="tab-btn" onclick="switchDisplayTab('youtube')">▶️ Youtube</button>
+            <button class="tab-btn" onclick="switchDisplayTab('music')">🎵 Music</button>
+            <button class="tab-btn" onclick="switchDisplayTab('countdown')">⏱️ Countdown</button>
+            <button class="tab-btn" onclick="switchDisplayTab('idle')">🔄 Idle & Night</button>
         </div>
         
         <div id="tab-clock" class="tab-pane active">
@@ -379,6 +383,111 @@
           <button class="btn btn-primary btn-save-display" style="margin-top: 1rem; width: 100%;">Save Display Settings</button>
         </div>
         </div>
+		
+        <div id="tab-youtube" class="tab-pane">
+        <div class="card glass shadow" style="margin-top: 2rem;">
+          <h3>📺 YouTube Subscribers</h3>
+          <p class="text-muted">Display subscriber count for YouTube channels on your LED matrix. Requires a YouTube Data API v3 key.</p>
+          <div class="form-group">
+            <label>YouTube Data API v3 Key</label>
+            <input type="text" id="cfg-youtube-api-key" class="input" placeholder="AIzaSy...">
+          </div>
+           <div class="form-grid col-3">
+              <div class="form-group">
+                <label>Duration per Channel (s)</label>
+                <input type="number" id="cfg-youtube-duration" class="input" value="5" min="2" max="60">
+              </div>
+              <div class="form-group">
+                <label>Refresh Rate (Minutes)</label>
+                <input type="number" id="cfg-cache-youtube" class="input" value="5" min="1" max="1440">
+              </div>
+              <div class="form-group">
+                <label>Font</label>
+                <select id="cfg-youtube-font" class="input"></select>
+              </div>
+            </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label>Channel Handles (Comma Separated)</label>
+            <input type="text" id="cfg-youtube-channels" class="input" placeholder="@MrBeast,@T-Series,@Cocomelon">
+          </div>
+          <button class="btn btn-primary btn-save-display" style="margin-top: 1rem; width: 100%;">Save Display Settings</button>
+        </div>
+        </div>
+
+        <div id="tab-music" class="tab-pane">
+        <div class="card glass shadow" style="margin-top: 2rem;">
+          <h3>🎵 Now Playing</h3>
+          <p class="text-muted">Afficher la musique en cours de lecture sur votre matrice LED.</p>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="cfg-music-enabled"> Activer l'affichage musique
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Serveur music_sender : http://[ip]:[port]</label>
+            <input type="text" id="cfg-music-server-url" class="input" value="http://192.168.1.100:8085">
+          </div>
+          <div class="form-grid col-3">
+            <div class="form-group">
+              <label>Duration d'affichage (s)</label>
+              <input type="number" id="cfg-music-duration" class="input" value="15" min="3" max="60">
+            </div>
+            <div class="form-group">
+              <label>Police</label>
+              <select id="cfg-music-font" class="input"></select>
+            </div>
+          </div>
+          <div class="form-grid col-5" style="margin-top: 1rem;">
+            <div class="form-group">
+              <label>Artist Color</label>
+              <input type="color" id="cfg-music-artist-color" class="input" value="#ffffff">
+            </div>
+            <div class="form-group">
+              <label>Title Color</label>
+              <input type="color" id="cfg-music-title-color" class="input" value="#c8c8c8">
+            </div>
+            <div class="form-group">
+              <label>Time Color</label>
+              <input type="color" id="cfg-music-time-color" class="input" value="#ffffff">
+            </div>
+            <div class="form-group">
+              <label>Bar BG Color</label>
+              <input type="color" id="cfg-music-bar-bg-color" class="input" value="#3c3c3c">
+            </div>
+            <div class="form-group">
+              <label>Bar FG Color</label>
+              <input type="color" id="cfg-music-bar-fg-color" class="input" value="#ffd700">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-save-display" style="margin-top: 1rem; width: 100%;">Save Display Settings</button>
+        </div>
+        </div>
+
+        <div id="tab-countdown" class="tab-pane">
+        <div class="card glass shadow" style="margin-top: 2rem;">
+          <h3>⏱️ Countdown Timer</h3>
+          <p class="text-muted">Afficher des compteurs à rebours vers des événements sur votre matrice LED.</p>
+          <div class="form-group">
+            <label>Événements (Titre|Date|Format, un par ligne)</label>
+            <div class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+              <strong>Date :</strong> <code>DD/MM/YYYY-HH:MM</code> (ex: <code>25/12/2026-00:00</code>)<br>
+              <strong>Format :</strong> <code>auto</code> (j/h/min) · <code>nights</code> (nuits restantes) · <code>hms</code> (HH:MM:SS)
+            </div>
+            <textarea id="cfg-countdown-events" class="input" rows="5" placeholder="Noël|25/12/2026-00:00|auto&#10;Nouvel An|01/01/2027-00:00|nights&#10;Été|21/06/2026-12:00|hms"></textarea>
+          </div>
+          <div class="form-grid col-3" style="margin-top: 1rem;">
+            <div class="form-group">
+              <label>Duration per Event (s)</label>
+              <input type="number" id="cfg-countdown-duration" class="input" value="15" min="3" max="60">
+            </div>
+            <div class="form-group">
+              <label>Font</label>
+              <select id="cfg-countdown-font" class="input"></select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-save-display" style="margin-top: 1rem; width: 100%;">Save Display Settings</button>
+        </div>
+        </div>
 
         <div id="tab-idle" class="tab-pane">
         <div class="card glass shadow" style="margin-top: 2rem;">
@@ -391,7 +500,10 @@
               <label class="toggle-btn"><input type="checkbox" value="weather" id="rot-weather" style="display:none;"> <span class="toggle-label">☁️ Weather</span></label>
               <label class="toggle-btn"><input type="checkbox" value="crypto" id="rot-crypto" style="display:none;"> <span class="toggle-label">📈 Crypto</span></label>
               <label class="toggle-btn"><input type="checkbox" value="stocks" id="rot-stocks" style="display:none;"> <span class="toggle-label">📊 Stocks</span></label>
+              <label class="toggle-btn"><input type="checkbox" value="countdown" id="rot-countdown" style="display:none;"> <span class="toggle-label">⏱️ Countdown</span></label>
               <label class="toggle-btn"><input type="checkbox" value="gifs" id="rot-gifs" style="display:none;"> <span class="toggle-label">🎬 GIFs</span></label>
+			  <label class="toggle-btn"><input type="checkbox" value="youtube" id="rot-youtube" style="display:none;"> <span class="toggle-label">📺 YouTube</span></label>
+              <label class="toggle-btn"><input type="checkbox" value="music" id="rot-music" style="display:none;"> <span class="toggle-label">🎵 Music</span></label>
             </div>
             <input type="hidden" id="cfg-rotation">
           </div>
@@ -426,6 +538,12 @@
               <input type="number" id="cfg-dur-weather" class="input" min="5">
             </div>
           </div>
+          <div class="form-grid col-3" style="margin-top: 1rem;">
+            <div class="form-group">
+              <label>Countdown Duration (s)</label>
+              <input type="number" id="cfg-dur-countdown" class="input" min="3">
+            </div>
+          </div>
           <hr style="margin: 1.5rem 0; border-color: rgba(255,255,255,0.1);">
           <div class="form-grid">
             <div class="form-group">
@@ -442,6 +560,10 @@
             <div class="form-group">
               <label>Wake Up At (HH:MM)</label>
               <input type="text" id="cfg-night-on" class="input" placeholder="07:00">
+            </div>
+            <div class="form-group">
+              <label>Night Brightness (<span id="val-night-brightness">0</span>%)</label>
+              <input type="range" id="cfg-night-brightness" min="0" max="100" value="0">
             </div>
           </div>
           <button class="btn btn-primary btn-save-display" style="margin-top: 1rem; width: 100%;">Save Display Settings</button>

@@ -94,8 +94,12 @@ echo "[Step 4] Moving binary and starting service..."
 sshpass -p "${PI_PASS}" ssh -o StrictHostKeyChecking=no "${PI_USER}@${PI_IP}" "echo '${PI_PASS}' | sudo -S mv $TARGET_DIR/arcadematrix_temp $TARGET_DIR/arcadematrix"
 sshpass -p "${PI_PASS}" ssh -o StrictHostKeyChecking=no "${PI_USER}@${PI_IP}" "echo '${PI_PASS}' | sudo -S chmod +x $TARGET_DIR/arcadematrix"
 
+echo "[Step 5] Patching systemd service for config.ini persistence..."
+sshpass -p "${PI_PASS}" ssh -o StrictHostKeyChecking=no "${PI_USER}@${PI_IP}" "echo '${PI_PASS}' | sudo -S bash -c \"sed -i '/^WorkingDirectory=/d' /etc/systemd/system/arcadematrix.service; sed -i '/^\\[Service\\]/a WorkingDirectory=${TARGET_DIR}' /etc/systemd/system/arcadematrix.service; systemctl daemon-reload\""
+
 echo "[OK] Service installed, restarting..."
 sshpass -p "${PI_PASS}" ssh -o StrictHostKeyChecking=no "${PI_USER}@${PI_IP}" "echo '${PI_PASS}' | sudo -S systemctl restart arcadematrix.service"
 
 echo "[Success] Deployment successful!"
 echo "=========================================================="
+
