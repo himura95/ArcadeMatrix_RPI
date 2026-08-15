@@ -15,6 +15,19 @@
     .form-grid.col-3 { grid-template-columns: repeat(3, 1fr); }
     .form-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
     .form-grid.col-5 { grid-template-columns: repeat(5, 1fr); }
+    .rot-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      cursor: grab; user-select: none; transition: opacity 0.2s, transform 0.15s;
+    }
+    .rot-item:active { cursor: grabbing; }
+    .rot-item.dragging { opacity: 0.4; transform: scale(0.97); }
+    .rot-item.drag-over { border-color: #00d4ff; background: rgba(0,212,255,0.08); }
+    .rot-item input[type="checkbox"] { accent-color: #00d4ff; width: 16px; height: 16px; cursor: pointer; }
+    .rot-label { flex: 1; font-size: 0.9rem; }
+    .rot-disabled { opacity: 0.45; }
+    .rot-handle { color: rgba(255,255,255,0.3); font-size: 1rem; }
   </style>
 </head>
 <body>
@@ -493,17 +506,8 @@
         <div class="card glass shadow" style="margin-top: 2rem;">
           <h3>🔄 Idle Rotation & Night Mode</h3>
           <div class="form-group">
-            <label>Active Screens in Rotation</label>
-            <div class="rotation-toggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <label class="toggle-btn"><input type="checkbox" value="clock" id="rot-clock" style="display:none;"> <span class="toggle-label">🕒 Clock</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="date" id="rot-date" style="display:none;"> <span class="toggle-label">📅 Date</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="weather" id="rot-weather" style="display:none;"> <span class="toggle-label">☁️ Weather</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="crypto" id="rot-crypto" style="display:none;"> <span class="toggle-label">📈 Crypto</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="stocks" id="rot-stocks" style="display:none;"> <span class="toggle-label">📊 Stocks</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="countdown" id="rot-countdown" style="display:none;"> <span class="toggle-label">⏱️ Countdown</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="gifs" id="rot-gifs" style="display:none;"> <span class="toggle-label">🎬 GIFs</span></label>
-			  <label class="toggle-btn"><input type="checkbox" value="youtube" id="rot-youtube" style="display:none;"> <span class="toggle-label">📺 YouTube</span></label>
-              <label class="toggle-btn"><input type="checkbox" value="music" id="rot-music" style="display:none;"> <span class="toggle-label">🎵 Music</span></label>
+            <label>Rotation Order (drag to reorder, toggle to enable/disable)</label>
+            <div id="rotation-order-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
             </div>
             <input type="hidden" id="cfg-rotation">
           </div>

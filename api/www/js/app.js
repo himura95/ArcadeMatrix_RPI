@@ -1,5 +1,6 @@
 import { API } from './api.js';
 import { setLanguage } from './i18n.js';
+import { initRotationOrder, setRotationFromConfig, getRotationString } from './components/rotation-order.js';
 import './components/toast.js';
 
 let selectedOtaFile = null;
@@ -40,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomMarquee();
   initNetworkSettings();
   initSettings();
+  initRotationOrder();
   initPlaylists();
 });
 
@@ -495,11 +497,7 @@ async function initSettings() {
     if (document.getElementById('cfg-dur-countdown')) document.getElementById('cfg-dur-countdown').value = s.countdown_duration_sec || 15;
 
     // Rotation
-    document.getElementById('cfg-rotation').value = s.rotation;
-    const rotationArr = (s.rotation || '').split(',').map(x => x.trim());
-    document.querySelectorAll('.rotation-toggles input[type="checkbox"]').forEach(cb => {
-      cb.checked = rotationArr.includes(cb.value);
-    });
+    setRotationFromConfig(s.rotation);
     document.getElementById('cfg-dur-clock').value = s.clock_duration_sec;
     document.getElementById('cfg-dur-date').value = s.date_duration_sec;
     document.getElementById('cfg-dur-weather').value = s.weather_duration_sec;
@@ -527,8 +525,7 @@ async function initSettings() {
       btnSaveDisplay.disabled = true;
       btnSaveDisplay.textContent = 'Saving...';
       try {
-          const selectedRotations = Array.from(document.querySelectorAll('.rotation-toggles input[type="checkbox"]:checked'))
-            .map(cb => cb.value).join(',');
+          const rotation = getRotationString();
 
           const payload = {
             clock_theme: parseInt(document.getElementById('cfg-clock-theme').value),
@@ -584,7 +581,7 @@ async function initSettings() {
             countdown_duration_sec: parseInt(document.getElementById('cfg-countdown-duration')?.value) || (parseInt(document.getElementById('cfg-dur-countdown')?.value) || 15),
             countdown_font: document.getElementById('cfg-countdown-font')?.value || 'PressStart2P.ttf',
 
-            rotation: selectedRotations,
+            rotation: rotation,
             clock_duration_sec: parseInt(document.getElementById('cfg-dur-clock').value) || 10,
           date_duration_sec: parseInt(document.getElementById('cfg-dur-date').value) || 10,
           weather_duration_sec: parseInt(document.getElementById('cfg-dur-weather').value) || 10,

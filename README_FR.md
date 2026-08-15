@@ -62,9 +62,9 @@ Si vous préférez l'installer manuellement sur un **Raspberry Pi OS Lite (64-bi
 Une fois connecté à votre Raspberry Pi en SSH :
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/red77290/ArcadeMatrix_RPI/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/himura95/ArcadeMatrix_RPI/main/autoInstall.sh | bash
 ```
-*(Si le dépôt est privé, vous devrez d'abord faire le `git clone` manuellement puis exécuter `./install.sh` depuis le dossier.)*
+*(Si le dépôt est privé, vous devrez d'abord faire le `git clone` manuellement puis exécuter `./autoInstall.sh` depuis le dossier.)*
 
 Le script va automatiquement :
 1. Installer Rust, Actix-web, image-rs et `build-essential`.
