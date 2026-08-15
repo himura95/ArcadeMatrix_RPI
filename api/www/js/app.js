@@ -150,7 +150,8 @@ function initDashboard() {
       document.getElementById('metric-cpu').textContent = `${info.cpu_load.toFixed(1)} %`;
       document.getElementById('metric-temp').textContent = `${info.temperature_c.toFixed(1)} °C`;
       document.getElementById('metric-ram').textContent = `${info.ram_used_mb} MB`;
-      document.getElementById('metric-disk').textContent = `${info.disk_free_gb} GB`;
+      const diskUsed = info.disk_total_gb - info.disk_free_gb;
+      document.getElementById('metric-disk').textContent = `${diskUsed.toFixed(1)} / ${info.disk_total_gb.toFixed(1)} GB`;
     } catch {}
   }, 4000);
 }

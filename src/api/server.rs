@@ -3,7 +3,7 @@ use crate::core::config::Config;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use serde_json::json;
 use std::sync::Arc;
-use sysinfo::System;
+use sysinfo::{Disks, System};
 
 pub struct AppState {
     pub config: Arc<Config>,
@@ -598,14 +598,22 @@ async fn api_system_info() -> impl Responder {
         .map(|c| c.temperature())
         .unwrap_or(42.0);
 
+    let gi = 1024.0 * 1024.0 * 1024.0;
+    let disks = Disks::new_with_refreshed_list();
+    let disk_total: u64 = disks.iter().map(|d| d.total_space()).sum();
+    let disk_free: u64 = disks.iter().map(|d| d.available_space()).sum();
+    let disk_total_gb = if disk_total > 0 { (disk_total as f64 / gi * 10.0).round() / 10.0 } else { 0.0 };
+    let disk_free_gb = if disk_total > 0 { (disk_free as f64 / gi * 10.0).round() / 10.0 } else { 0.0 };
+    let disk_percent = if disk_total > 0 { ((disk_total - disk_free) as f64 / disk_total as f64 * 100.0) as u32 } else { 0 };
+
     HttpResponse::Ok().json(json!({
         "cpu_load": cpu_load,
         "ram_used_mb": ram_used,
         "ram_total_mb": ram_total,
         "ram_percent": (ram_used as f32 / ram_total as f32 * 100.0) as u32,
-        "disk_free_gb": 10.5,
-        "disk_total_gb": 16.0,
-        "disk_percent": 35,
+        "disk_free_gb": disk_free_gb,
+        "disk_total_gb": disk_total_gb,
+        "disk_percent": disk_percent,
         "temperature_c": temp,
     }))
 }
